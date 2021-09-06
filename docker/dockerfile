@@ -1,0 +1,46 @@
+FROM debian
+workdir /tmp/work
+
+RUN apt update \
+  && apt install -y \
+    wget \
+    gnupg \
+    unzip \
+    bash \
+    python3-pip \
+    python3-tk \
+    python3-dev \
+    libgtk-3-dev \
+    git \
+    zlib1g-dev \
+    libjpeg-dev \
+    chromium \
+    scrot
+
+RUN pip3 install \
+  bs4 \
+  selenium \
+  pandas \
+  Pillow \
+  pynput \
+  pyautogui
+
+RUN mkdir /tmp/work/chromeDriver \
+  && cd chromeDriver \
+  && wget https://chromedriver.storage.googleapis.com/90.0.4430.24/chromedriver_linux64.zip \
+  && unzip chromedriver_linux64.zip
+
+RUN useradd bigBoy \
+  && usermod --uid 1000 bigBoy \
+  && groupmod --gid 1001 bigBoy \
+  && usermod -a -G audio bigBoy \
+  && chown -R bigBoy:bigBoy /tmp/work \
+  && mkdir /home/bigBoy \
+  && touch /home/bigBoy/.Xauthority \
+  && chown bigBoy:bigBoy /home/bigBoy \
+  && mkdir /home/bigBoy/.config \
+  && chown bigBoy:bigBoy /home/bigBoy/.config
+
+USER bigBoy
+
+ENTRYPOINT /bin/bash
