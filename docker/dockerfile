@@ -23,7 +23,8 @@ RUN pip3 install \
   pandas \
   Pillow \
   pynput \
-  pyautogui
+  pyautogui \
+  fake_useragent
 
 RUN mkdir /tmp/work/chromeDriver \
   && cd chromeDriver \

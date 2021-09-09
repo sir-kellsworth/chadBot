@@ -11,11 +11,30 @@ class RunescapeWindow:
         self.windowScaleY = 2
         self.elementScaleX = 2
         self.elementScaleY = 12
-        self.driver = webdriver.Chrome(executable_path='/tmp/work/chromeDriver/chromedriver')
-        self.screenCornerX, self.screenCornerY = self.driver.get_window_position()
+        options = webdriver.ChromeOptions()
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36')
+        #options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4324.104 Safari/537.36')
+        options.add_argument('start-maximized')
+        options.add_argument('window-size=1920,1080')
+        options.add_argument('disable-infobars')
+        options.add_argument('dom.webdriver.enabled", False')
+        caps = webdriver.DesiredCapabilities.CHROME.copy()
+        caps['platform'] = 'Windows NT 10'
+        caps['version'] = '74.0.3729.169'
+        caps['binary_location'] = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'
+        #options.add_user_profile_preference("dom.webdriver.enabled", False)
+        self.driver = webdriver.Chrome(executable_path='/tmp/work/chromeDriver/chromedriver', options=options, desired_capabilities=caps)
+        self.driver.execute_script("Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
+        self.driver.execute_script("Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
+        self.driver.execute_script("Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
+        self.driver.execute_script("Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
+        #self.driver.define_property('webdriver=false')
+        pos = self.driver.get_window_position()
+        self.windowCornerX = int(pos['x'])
+        self.windowCornerY = int(pos['y'])
         self.driver.get("https://www.oldschool.runescape.com")
-        time.sleep(1)
-        loginLink = self.driver.findElementByText('Log in')
+        time.sleep(0.6)
+        loginLink = self.findElementByText('Log in')
         self.clickElement(loginLink, 'left')
 
     #**************************************************************************
