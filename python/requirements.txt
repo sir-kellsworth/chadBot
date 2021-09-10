@@ -1,2 +1,4 @@
 pynput
 pyautogui
+selenium
+numpy

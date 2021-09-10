@@ -11,6 +11,10 @@ class HumanMouse:
         self.interval = interval
 
     #**************************************************************************
+    def positionGet(self):
+        return pyautogui.position()
+
+    #**************************************************************************
     def moveTo(self, toPos):
         fromPos = pyautogui.position()
         curve = HumanCurve(fromPos, toPos)
