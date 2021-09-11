@@ -1,23 +1,45 @@
-import Bot
+from bots.Bot import *
 
 import cv2
 import numpy as np
+import math
 
-class Minner(Bot):
+class Miner(Bot):
+    #**************************************************************************
     def __init__(self, profile, window):
         super().__init__(profile, window)
-        self.minningLocation = profile.valueGet('minningLocation')
+        #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
         self.mines = {
             'tin1':   ([0, 13, 104], [3, 73, 148]),
-            'tin':    ([0, 19, 121], [1, 30, 136]),
+            'tin':    ([54, 54, 64], [78, 78, 98]),
             'cooper': ([14, 135, 88],[15, 140, 169]),
             'iron':   ([7, 138, 50], [10, 146, 85]),
             'gems':   ([150, 223, 61], [151, 235, 169])
         }
 
+    #**************************************************************************
+    def stepTest(self):
+        target = self.search('tin')
+        self.targetDisplay(target)
+        self.mine(target)
+        time.sleep(12)
+
+    #**************************************************************************
+    def targetDisplay(self, target):
+        debugWindow = self.window.playAreaGet()
+        if target != None:
+            boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
+            cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
+        else:
+            print("no tin found")
+
+        cv2.imshow('debug window', debugWindow)
+        cv2.waitKey(100)
+
+    #**************************************************************************
     def step(self):
-        if self.state == STATE_IDEL:
+        if self.state == STATE_IDLE:
             self.idle()
         elif self.state == STATE_MINE_SEARCH:
             self.search(self.targetLocation)
@@ -31,9 +53,9 @@ class Minner(Bot):
             self.search(self.window.find('bankLocation'))
 
     #**************************************************************************
-    def mine(self):
-        mine = self.mineFind(self, self.targetMine, self.window.playWindowGet(), self.window)
-        self.window.click(mine.position(), 'leftClick')
+    def mine(self, mineLocation):
+        #mine = self.mineFind(self, self.targetMine, self.window.playWindowGet(), self.window)
+        self.window.click(mineLocation, 'left')
 
         return STATE_MINE_FINISH
 
@@ -55,42 +77,18 @@ class Minner(Bot):
         return STATE_INVENTORY_CHECK
 
     #**************************************************************************
-    def search(self, targetLocation):
-        print("search function not implemented yet")
-        map = self.window.find('miniMap')
-        searching = True
-
-        #search idea:
-        #first, use premade path to target
-        #second, search for mine
-        while searching:
-            self.pathReplay(self.targetLocation)
-            mine = self.mineFindRandom(self, self.targetMine, self.window.playWindowGet(), self.window)
-            self.window.click(mine)
-            if mine != None:
-                searching = False
-
-        return STATE_MINE
+    def search(self, targetMine):
+        return self.mineFindClosest(targetMine, self.window.playAreaGet())
 
     #**************************************************************************
-    def mineFindClosest(self, mineType, playArea, window):
-        screenshot = window.get_screenshot_as_png()
-        location = playArea.location
-        size = playArea.size
-        frame = np.frombuffer(screenshot, np.uint8)
-        img = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        left = location['x']
-        top = location['y']
-        right = left + size['width']
-        bottom = top + size['height']
-        playImage = img[left:right, top:bottom]
-
-        mask = cv2.inRange(playImage, np.array(self.mines[minetype][0], np.array(self.mines[mineType][1])))
+    def mineFindAll(self, mineType, playArea):
+        mask = cv2.inRange(playArea, np.array(self.mines[mineType][0]), np.array(self.mines[mineType][1]))
+        cv2.imshow('mask', mask)
         kernel = np.ones((10, 10), np.uint8)
         closing = cv2.morphologyEx(mask.copy(), cv2.MORPH_CLOSE, kernel)
 
         contours, _ = cv2.findContours(closing.copy(), 1, 2)
-        mineAreas = {}
+        mineAreas = []
         for next in contours:
             #good for debuging. Draws rectagles over the mines
             x, y, w, h = cv2.boundingRect(next)
@@ -99,57 +97,40 @@ class Minner(Bot):
             #gets number of mines found
             area = cv2.contourArea(next)
             #500 just picked. Might need to adjust this
-            if area > 500:
-                centerX = x + (w // 2)
-                centerY = y + (h // 2)
-                mineLocations[area] = (centerX, centerY)
-
-            if len(mineAreas) > 0:
-                closest = 10000
-                target = ()
-                for next in mineAreas:
-                    distance = Math.sqrt(Math.square(playerX - centerX) + Math.square(playerY - centerY))
-                    if distance < closest:
-                        closest = distance
-                        target = (centerX, centerY)
-                return target
-            else:
-                return None
-
-    #**************************************************************************
-    def mineFindRandom(self, mineType, playArea, window):
-        screenshot = window.get_screenshot_as_png()
-        location = playArea.location
-        size = playArea.size
-        frame = np.frombuffer(screenshot, np.uint8)
-        img = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        left = location['x']
-        top = location['y']
-        right = left + size['width']
-        bottom = top + size['height']
-        playImage = img[left:right, top:bottom]
-
-        mask = cv2.inRange(playImage, np.array(self.mines[minetype][0], np.array(self.mines[mineType][1])))
-        kernel = np.ones((10, 10), np.uint8)
-        closing = cv2.morphologyEx(mask.copy(), cv2.MORPH_CLOSE, kernel)
-
-        contours, _ = cv2.findContours(closing.copy(), 1, 2)
-        mineAreas = {}
-        for next in contours:
-            #good for debuging. Draws rectagles over the mines
-            x, y, w, h = cv2.boundingRect(next)
-            cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
-
-            #gets number of mines found
-            area = cv2.contourArea(next)
-            #500 just picked. Might need to adjust this
-            if area > 500:
+            if area > 200:
                 M = cv2.moments(next)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
-                mineAreas[area] = (cx, cy)
+                mineAreas.append({'area': area, 'location': (cx, cy)})
 
-            if len(mineAreas) > 0:
-                return random.choice(mineAreas)
-            else:
-                return None
+        return mineAreas
+
+
+    #**************************************************************************
+    def mineFindClosest(self, mineType, playArea):
+        mines = self.mineFindAll(mineType, playArea)
+
+        if len(mines) > 0:
+            closest = 10000
+            target = ()
+            playerCenter = self.window.sizeGet()
+            playerX = playerCenter[0] / 2
+            playerY = playerCenter[1] / 2
+            for next in mines:
+                mineLocation = next['location']
+                distance = math.sqrt((playerX - mineLocation[0])**2 + (playerY - mineLocation[1])**2)
+                if distance < closest:
+                    closest = distance
+                    target = mineLocation
+            return target
+        else:
+            return None
+
+    #**************************************************************************
+    def mineFindRandom(self, mineType, playArea):
+        mines = self.mineFindAll(mineType, playArea)
+
+        if len(mines) > 0:
+            return random.choice(mines)['location']
+        else:
+            return None

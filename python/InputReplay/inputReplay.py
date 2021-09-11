@@ -5,7 +5,7 @@ import pyautogui
 import time
 import threading
 import collections
-import Event
+import InputReplay.Event
 import pickle
 
 class InputReplay:

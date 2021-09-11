@@ -63,9 +63,6 @@ class InputRecord:
     def save(self, filename):
         with open(filename, 'wb') as file:
             file.write(pickle.dumps(self.deque))
-            #while not self.deque.empty():
-            #    next = self.deque.get()
-            #    file.write(next.print() + "\n")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,9 @@ import Xlib.display
 import Xlib.X
 import time
 import subprocess
+import numpy as np
+import cv2
+from PIL import ImageGrab
 
 from Mouse.HumanMouse import HumanMouse
 from Keyboard import Keyboard
@@ -21,6 +24,20 @@ class RunescapeWindow:
 
         self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
         self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
+
+    #**************************************************************************
+    def worldPick(self):
+        corner = self.cornerGet()
+        worldPickButton = (87, 514)
+        world326 = (235, 94)
+
+        worldPickButton = (corner[0] + worldPickButton[0], corner[1] + worldPickButton[1])
+        world326 = (corner[0] + world326[0], corner[1] + world326[1])
+
+        self.mouse.click(worldPickButton, 'left')
+        time.sleep(2)
+        self.mouse.click(world326, 'left')
+        time.sleep(2)
 
     #**************************************************************************
     def login(self, username, password):
@@ -65,6 +82,7 @@ class RunescapeWindow:
                     print(winName)
                     if corner[0] > 10 and corner[1] > 10:
                         window = win
+                        return window
 
             except Xlib.error.BadWindow:
                 print("got badWindow error")
@@ -75,6 +93,28 @@ class RunescapeWindow:
     def runescapeStart(self):
         self.runescapeProcess = subprocess.Popen(['snap', 'run', 'runescape.osrs'])
         time.sleep(5)
+
+    #**************************************************************************
+    def cornerGet(self):
+        return (self.window.get_geometry().x, self.window.get_geometry().y)
+
+    #**************************************************************************
+    def sizeGet(self):
+        return (self.window.get_geometry().width, self.window.get_geometry().height)
+
+    #**************************************************************************
+    def playAreaGet(self):
+        corner = self.cornerGet()
+        size = self.sizeGet()
+        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = img[25:505, 25:615]
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    #**************************************************************************
+    def click(self, location, button):
+        corner = self.cornerGet()
+        location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)
+        self.mouse.click(location, button)
 
 if __name__ == "__main__":
     testWindow = RunescapeWindow()

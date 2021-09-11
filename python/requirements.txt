@@ -2,3 +2,4 @@ pynput
 pyautogui
 selenium
 numpy
+opencv-python

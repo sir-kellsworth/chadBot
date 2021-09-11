@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-import bots
+from bots.Miner import Miner
 import Profile
 import RunescapeWindow
 import signal
 import sys
+import time
 
 if len(sys.argv) != 2:
     print("usage: ./main.py profile.conf")
@@ -18,11 +19,16 @@ signal.signal(signal.SIGINT, signalHandle)
 
 profile = Profile.Profile(sys.argv[1])
 window = RunescapeWindow.RunescapeWindow()
-window.login(profile.loginGet())
-bot = bots.Minner(profile.configGet(), window)
+window.worldPick()
+window.login(profile.emailGet(), profile.passwordGet())
+
+#sleeps a little to wait for runescape to load
+time.sleep(10)
+
+bot = Miner(profile, window)
 
 while running:
-    bot.step()
+    bot.stepTest()
 
-window.logout()
-window.kill()
+#window.logout()
+#window.kill()

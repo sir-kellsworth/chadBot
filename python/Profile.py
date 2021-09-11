@@ -7,8 +7,11 @@ class Profile:
         self.config.read(configFile)
 
     #**************************************************************************
-    def loginGet(self):
-        return (self.config.get('Login', 'username'), self.config.get('Login', 'password'))
+    def emailGet(self):
+        return self.config.get('Email', 'email')
+
+    def passwordGet(self):
+        return self.config.get('Login', 'password')
 
     #**************************************************************************
     def pathsGet(self):
