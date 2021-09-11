@@ -17,13 +17,52 @@ class Miner(Bot):
             'iron':   ([7, 138, 50], [10, 146, 85]),
             'gems':   ([150, 223, 61], [151, 235, 169])
         }
+        self.responTimes = {
+            'tin': 4
+        }
+        self.inventoryRange = ([39, 52, 60], [43, 55, 64])
 
     #**************************************************************************
     def stepTest(self):
-        target = self.search('tin')
-        self.targetDisplay(target)
-        self.mine(target)
-        time.sleep(12)
+        if len(self.inventoryCheck()) < 27:
+            target = self.search('tin')
+            self.targetDisplay(target)
+            self.inventoryDisplay()
+            self.mine(target)
+            self.mineWait(self.responTimes['tin'])
+        else:
+            print("inventory full")
+            self.pathReplay('fromtintobanktotin')
+            #self.pathReplay('fromTinToBank')
+            #self.pathReplay('bankDeposit')
+            #self.pathReplay('fromBankToTin')
+
+    #**************************************************************************
+    def inventoryCheck(self):
+        inventory = self.window.inventoryAreaGet()
+        emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
+
+        inventoryArea = cv2.bitwise_not(emptyMask)
+        cv2.imshow('inventory', inventoryArea)
+        cv2.waitKey(30)
+
+        contours, _ = cv2.findContours(inventoryArea.copy(), 1, 2)
+        mineAreas = []
+        for next in contours:
+            #good for debuging. Draws rectagles over the mines
+            x, y, w, h = cv2.boundingRect(next)
+            cv2.rectangle(inventoryArea, (x, y), (x+w, y+h), (255, 255, 255), -1)
+
+            #gets number of mines found
+            area = cv2.contourArea(next)
+            #500 just picked. Might need to adjust this
+            if area > 130:
+                M = cv2.moments(next)
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                mineAreas.append({'area': area, 'location': (cx, cy)})
+
+        return mineAreas
 
     #**************************************************************************
     def targetDisplay(self, target):
@@ -36,6 +75,15 @@ class Miner(Bot):
 
         cv2.imshow('debug window', debugWindow)
         cv2.waitKey(100)
+
+    #**************************************************************************
+    def inventoryDisplay(self):
+        inventory = self.window.inventoryAreaGet()
+        emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
+
+        inventoryArea = cv2.bitwise_not(emptyMask)
+        cv2.imshow('inventory', inventoryArea)
+        cv2.waitKey(30)
 
     #**************************************************************************
     def step(self):
@@ -60,21 +108,22 @@ class Miner(Bot):
         return STATE_MINE_FINISH
 
     #**************************************************************************
-    def mineWait(self):
-        #for now, just wait some time
-        #later, it will check the screen to see if the mine is still there
+    def mineWait(self, respondTime):
         mining = True
-        target = self.mineFindClosest(self, self.targetMine, self.window.playWindowGet(), self.window)
+        currentNum = len(self.inventoryCheck())
 
-        #search for mine closest to the player
+        endTime = time.time() + 15
         while mining:
-            mine = self.mineFindClosest(self, self.targetMine, self.window.playWindowGet(), self.window)
-            if targetMine != closestMine:
+            numItems = len(self.inventoryCheck())
+            if numItems > currentNum:
+                mining = False
+            #make sure it doesnt break if someone mines it before we do
+            elif time.time() > endTime:
                 mining = False
             else:
-                time.sleep(5)
+                time.sleep(1)
 
-        return STATE_INVENTORY_CHECK
+        time.sleep(respondTime)
 
     #**************************************************************************
     def search(self, targetMine):
@@ -113,9 +162,9 @@ class Miner(Bot):
         if len(mines) > 0:
             closest = 10000
             target = ()
-            playerCenter = self.window.sizeGet()
-            playerX = playerCenter[0] / 2
-            playerY = playerCenter[1] / 2
+            playAreaShape = self.window.playAreaGet().shape
+            playerX = (playAreaShape[0] / 2) + 50
+            playerY = (playAreaShape[1] / 2) + 50
             for next in mines:
                 mineLocation = next['location']
                 distance = math.sqrt((playerX - mineLocation[0])**2 + (playerY - mineLocation[1])**2)

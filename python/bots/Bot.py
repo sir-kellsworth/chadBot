@@ -1,4 +1,4 @@
-import InputReplay.inputReplay
+from InputReplay.inputReplay import InputReplay
 import random
 import time
 
@@ -16,10 +16,10 @@ class Bot:
         self.window = window
         #self.targetLocation = profile.targetLocationGet()
         self.paths = {}
-        #for path in profile.pathsGet():
-        #    self.paths[path['PathName']] = InputReplay(path['file'])
-        #self.idleMessages = profile.idleMessagesGet()
-        #self.idleChance = profile.idleChanceGet()
+        for path in profile.pathsGet():
+            self.paths[path['PathName']] = InputReplay(path['File'])
+        self.idleMessages = profile.idleMessagesGet()
+        self.idleChance = profile.idleChanceGet()
 
     #**************************************************************************
     def pathReplay(self, pathName):

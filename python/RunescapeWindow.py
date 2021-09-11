@@ -111,6 +111,14 @@ class RunescapeWindow:
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
+    def inventoryAreaGet(self):
+        corner = self.cornerGet()
+        size = self.sizeGet()
+        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = img[330:-85, 621:-9]
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    #**************************************************************************
     def click(self, location, button):
         corner = self.cornerGet()
         location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)

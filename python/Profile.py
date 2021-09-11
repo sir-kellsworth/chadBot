@@ -1,4 +1,5 @@
 import configparser
+import os
 
 class Profile:
     #**************************************************************************
@@ -14,13 +15,17 @@ class Profile:
         return self.config.get('Login', 'password')
 
     #**************************************************************************
-    def pathsGet(self):
-        return self.config.get('Pathing', 'paths')
-
-    #**************************************************************************
     def idleMessagesGet(self):
         return self.config.get('Idle', 'messages')
 
     #**************************************************************************
     def idleChanceGet(self):
         return self.config.get('Idle', 'speakChance')
+
+    def pathsGet(self):
+        paths = []
+        tmp = self.config.items('paths')
+        for key, path in tmp:
+            paths.append({'PathName': key, 'File': path})
+
+        return paths

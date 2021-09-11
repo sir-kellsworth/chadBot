@@ -1,11 +1,14 @@
 #!/usr/bin/python
-
+import sys
+import os
+sys.path.append(os.path.join(sys.path[0], 'InputReplay/'))
+print(sys.path)
 from pynput import mouse, keyboard
 import pyautogui
 import time
 import threading
 import collections
-import InputReplay.Event
+import Event
 import pickle
 
 class InputReplay:

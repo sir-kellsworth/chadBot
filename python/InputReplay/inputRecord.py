@@ -23,6 +23,8 @@ class InputRecord:
             on_release=self.onKeyrelease
         )
         self.keyboardController = keyboard.Controller()
+        self.semaphore = threading.Semaphore(1)
+        self.semaphore.acquire()
 
     #**************************************************************************
     def captureStart(self):
@@ -34,6 +36,10 @@ class InputRecord:
     def captureStop(self):
         self.mouseListener.stop()
         self.keyboardListener.stop()
+
+    def escWait(self):
+        self.semaphore.acquire()
+        self.semaphore.release()
 
     #**************************************************************************
     def timeGet(self):
@@ -57,6 +63,10 @@ class InputRecord:
 
     #**************************************************************************
     def onKeyrelease(self, key):
+        if key == keyboard.Key.esc:
+            self.captureStop()
+            self.semaphore.release()
+
         self.deque.append(Event.KeyReleasedEvent(self.timeGet(), key))
 
     #**************************************************************************
@@ -69,7 +79,8 @@ if __name__ == "__main__":
     capture = InputRecord()
     input("press enter to start")
     capture.captureStart()
-    input("press enter to stop")
+    print("press esc to stop")
+    capture.escWait()
     capture.captureStop()
 
     print("saving")
