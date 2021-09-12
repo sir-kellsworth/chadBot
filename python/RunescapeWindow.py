@@ -31,24 +31,29 @@ class RunescapeWindow:
     # description
     #   selects a world (326)
     def worldPick(self):
-        corner = self.cornerGet()
+        size = self.sizeGet()
         worldPickButton = (87, 525)
-        world326 = (235, 120)
+        worldPickButtonScaled = (worldPickButton[0] / size[0], worldPickButton[1] / size[1])
+        print("**********")
+        print("world pick button scaled: " + str(worldPickButton))
+        print("**********")
+        world326Button = (235, 120)
+        world326ButtonScaled = (world326Button[0] / size[0], world326Button[1] / size[1])
+        print("**********")
+        print("world pick button scaled: " + str(worldPickButton))
+        print("**********")
 
-        worldPickButton = (corner[0] + worldPickButton[0], corner[1] + worldPickButton[1])
-        world326 = (corner[0] + world326[0], corner[1] + world326[1])
-
-        self.mouse.click(worldPickButton, 'left')
+        self.click(worldPickButtonScaled, 'left')
         time.sleep(2)
-        self.mouse.click(world326, 'left')
+        self.click(world326ButtonScaled, 'left')
         time.sleep(2)
 
     #**************************************************************************
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
-        existingUserButton = (494, 340)
         size = self.sizeGet()
+        existingUserButton = (494, 340)
         existingUserScaled = (existingUserButton[0] / size[0], existingUserButton[1] / size[1])
         print("**********")
         print("existing user scaled: " + str(existingUserScaled))
