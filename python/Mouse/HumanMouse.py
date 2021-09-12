@@ -31,6 +31,11 @@ class HumanMouse:
         pyautogui.click(button=button, duration=self.duration)
 
     #**************************************************************************
+    def straightClick(self, toPos, button):
+        pyautogui.moveTo(toPos, duration=0.200)
+        pyautogui.click(button=button, duration=self.duration)
+
+    #**************************************************************************
     def doubleClick(self, toPos, button):
         fromPos = pyautogui.position()
         curve = HumanCurve(fromPos, toPos)

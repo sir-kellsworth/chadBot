@@ -28,8 +28,8 @@ class RunescapeWindow:
     #**************************************************************************
     def worldPick(self):
         corner = self.cornerGet()
-        worldPickButton = (87, 514)
-        world326 = (235, 94)
+        worldPickButton = (87, 525)
+        world326 = (235, 120)
 
         worldPickButton = (corner[0] + worldPickButton[0], corner[1] + worldPickButton[1])
         world326 = (corner[0] + world326[0], corner[1] + world326[1])
@@ -48,6 +48,7 @@ class RunescapeWindow:
         existingUserButtonX = self.windowCorner[0] + existingUserButtonXOffset
         existingUserButtonY = self.windowCorner[1] + existingUserButtonYOffset
         loginButton = (self.windowCorner[0] + loginXOffset, self.windowCorner[1] + loginYOffset)
+        inventoryButton = (700, 612)
 
         print("corner: " + str(self.windowCorner))
         print("expected:" + str((existingUserButtonX, existingUserButtonY)))
@@ -62,6 +63,19 @@ class RunescapeWindow:
         time.sleep(0.8)
         self.keyboard.enter()
         time.sleep(3)
+        #there is another 'play button' after in pretty much the same location
+        self.mouse.click((existingUserButtonX, existingUserButtonY), 'left')
+        time.sleep(2)
+
+        #also need to open the inventory
+        self.mouse.click(inventoryButton, 'left')
+        time.sleep(1)
+
+    #**************************************************************************
+    def topViewSet(self):
+        self.keyboard.hold('up')
+        time.sleep(2)
+        self.keyboard.release('up')
 
     #**************************************************************************
     def windowSearch(self):
@@ -124,6 +138,8 @@ class RunescapeWindow:
         location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)
         self.mouse.click(location, button)
 
-if __name__ == "__main__":
-    testWindow = RunescapeWindow()
-    testWindow.login("chadsbutt@gmail.com", "McDemShoulders")
+    #**************************************************************************
+    def straightClick(self, location, button):
+        corner = self.cornerGet()
+        location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)
+        self.mouse.straightClick(location, button)

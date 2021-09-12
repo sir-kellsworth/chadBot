@@ -23,3 +23,19 @@ class Keyboard:
         time.sleep(0.1)
         self.keyboard.release(pynput.keyboard.Key.enter)
         time.sleep(0.08)
+
+    def hold(self, key):
+        if key == 'up':
+            self.keyboard.press(pynput.keyboard.Key.up)
+        elif key == 'down':
+            self.keyboard.press(pynput.keyboard.Key.down)
+        else:
+            self.keyboard.press(key)
+
+    def release(self, key):
+        if key == 'up':
+            self.keyboard.release(pynput.keyboard.Key.up)
+        elif key == 'down':
+            self.keyboard.release(pynput.keyboard.Key.down)
+        else:
+            self.keyboard.release(key)

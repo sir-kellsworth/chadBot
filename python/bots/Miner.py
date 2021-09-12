@@ -4,38 +4,46 @@ import cv2
 import numpy as np
 import math
 
+STATE_MINING = 0
+STATE_BANK_RUN = 1
+STATE_BANK_DEPOSIT = 2
+STATE_MINE_RUN = 3
+
 class Miner(Bot):
     #**************************************************************************
-    def __init__(self, profile, window):
+    def __init__(self, profile, window, debug = False):
+        self.debug = debug
         super().__init__(profile, window)
         #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
         self.mines = {
-            'tin1':   ([0, 13, 104], [3, 73, 148]),
             'tin':    ([54, 54, 64], [78, 78, 98]),
-            'cooper': ([14, 135, 88],[15, 140, 169]),
-            'iron':   ([7, 138, 50], [10, 146, 85]),
-            'gems':   ([150, 223, 61], [151, 235, 169])
+            'cooper': ([50, 91, 139], [64, 105, 153]),
+            #'iron':   ([7, 138, 50], [10, 146, 85]),
+            #'gems':   ([150, 223, 61], [151, 235, 169]),
+            'bankWindow': ([83, 114, 126], [91, 122, 134]),
+            'stairs': ([2, 46, 76], [6, 50, 80])
         }
         self.responTimes = {
-            'tin': 4
+            'tin': 3,
+            'cooper': 3,
+            'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
+        self.state = STATE_MINING
 
     #**************************************************************************
-    def stepTest(self):
-        if len(self.inventoryCheck()) < 27:
-            target = self.search('tin')
-            self.targetDisplay(target)
-            self.inventoryDisplay()
-            self.mine(target)
-            self.mineWait(self.responTimes['tin'])
+    def step(self):
+        if self.state == STATE_MINING:
+            self.state = self.mine()
+        elif self.state == STATE_BANK_RUN:
+            self.state = self.bankRun()
+        elif self.state == STATE_BANK_DEPOSIT:
+            self.state = self.deposit()
+        elif self.state == STATE_MINE_RUN:
+            self.state = self.mineRun()
         else:
-            print("inventory full")
-            self.pathReplay('fromtintobanktotin')
-            #self.pathReplay('fromTinToBank')
-            #self.pathReplay('bankDeposit')
-            #self.pathReplay('fromBankToTin')
+            print("invalid state: " + str(self.state))
 
     #**************************************************************************
     def inventoryCheck(self):
@@ -43,8 +51,9 @@ class Miner(Bot):
         emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
 
         inventoryArea = cv2.bitwise_not(emptyMask)
-        cv2.imshow('inventory', inventoryArea)
-        cv2.waitKey(30)
+        if self.debug:
+            cv2.imshow('inventory', inventoryArea)
+            cv2.waitKey(30)
 
         contours, _ = cv2.findContours(inventoryArea.copy(), 1, 2)
         mineAreas = []
@@ -71,10 +80,10 @@ class Miner(Bot):
             boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
         else:
-            print("no tin found")
+            print("no target found")
 
         cv2.imshow('debug window', debugWindow)
-        cv2.waitKey(100)
+        cv2.waitKey(2000)
 
     #**************************************************************************
     def inventoryDisplay(self):
@@ -86,26 +95,97 @@ class Miner(Bot):
         cv2.waitKey(30)
 
     #**************************************************************************
-    def step(self):
-        if self.state == STATE_IDLE:
-            self.idle()
-        elif self.state == STATE_MINE_SEARCH:
-            self.search(self.targetLocation)
-        elif self.state == STATE_MINE:
-            self.mine()
-        elif self.state == STATE_MINE_FINISH:
-            self.mineWait()
-        elif self.state == STATE_INVENTORY_CHECK:
-            self.inventoryCheck()
-        elif self.state == STATE_BANK_RUN:
-            self.search(self.window.find('bankLocation'))
+    def mine(self):
+        returnState = None
+
+        if len(self.inventoryCheck()) < 27:
+            target = self.search('tin')
+            if self.debug:
+                self.targetDisplay(target)
+            self.window.click(target, 'left')
+            self.mineWait(self.responTimes['tin'])
+
+            returnState = STATE_MINING
+        else:
+            returnState = STATE_BANK_RUN
+
+        return returnState
 
     #**************************************************************************
-    def mine(self, mineLocation):
-        #mine = self.mineFind(self, self.targetMine, self.window.playWindowGet(), self.window)
-        self.window.click(mineLocation, 'left')
+    def bankRun(self):
+        bankMapLocation = (728, 54)
+        self.pathReplay('fromtintostairs')
+        self.stairsClimb('up')
+        self.window.click(bankMapLocation, 'left')
 
-        return STATE_MINE_FINISH
+        return STATE_BANK_DEPOSIT
+
+    #**************************************************************************
+    def stairsClimb(self, direction):
+        upButtonOffset = (0, 44)
+        downButtonOffset = (0, 54)
+        target = self.search('stairs', areaThreshold=50)
+        if self.debug:
+            self.targetDisplay(target)
+        if direction == 'up':
+            #first set of stairs, left click
+            target = (target[0] + 20, target[1] + 20)
+            self.window.click(target, 'left')
+            time.sleep(1)
+            #second set of stairs, right click
+            target = self.search('stairs', areaThreshold=50)
+            if self.debug:
+                self.targetDisplay(target)
+            target = (target[0] + 20, target[1] + 20)
+            self.window.click(target, 'right')
+            upButton = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
+            self.window.straightClick(upButton, 'left')
+        elif direction == 'down':
+            #first set of stairs, left click
+            target = (target[0] + 40, target[1] - 40)
+            self.window.click(target, 'left')
+            time.sleep(1)
+            #second set of stairs, right click
+            target = self.search('stairs', areaThreshold=50)
+            if self.debug:
+                self.targetDisplay(target)
+            target = (target[0] + 20, target[1] + 20)
+            self.window.click(target, 'right')
+            downButton = (target[0] + downButtonOffset[0], target[1] + downButtonOffset[1])
+            self.window.straightClick(downButton, 'left')
+
+        time.sleep(1)
+
+
+
+    #**************************************************************************
+    def bankDeposit(self):
+        depositAllButton = (470, 461)
+        bankCloseButton = (510, 35)
+        #find bank window
+        target = self.search('bankWindow', areaThreshold=100)
+        #click on bank window
+        if self.debug:
+            self.targetDisplay(target)
+        self.window.click(target, 'left')
+        time.sleep(1)
+        #click on deposit all button
+        self.window.click(depositAllButton, 'left')
+        time.sleep(1)
+        #close bank window
+        self.window.click(bankCloseButton, 'left')
+
+        return STATE_MINE_RUN
+
+    #**************************************************************************
+    def mineRun(self):
+        stairsLocation = (700, 144)
+        self.window.click(stairsLocation, 'left')
+        time.sleep(5)
+        self.stairsClimb('down')
+        self.pathReplay('frombanktotin')
+
+        return STATE_MINING
 
     #**************************************************************************
     def mineWait(self, respondTime):
@@ -126,11 +206,11 @@ class Miner(Bot):
         time.sleep(respondTime)
 
     #**************************************************************************
-    def search(self, targetMine):
-        return self.mineFindClosest(targetMine, self.window.playAreaGet())
+    def search(self, targetMine, areaThreshold = 200):
+        return self.mineFindClosest(targetMine, self.window.playAreaGet(), areaThreshold)
 
     #**************************************************************************
-    def mineFindAll(self, mineType, playArea):
+    def mineFindAll(self, mineType, playArea, areaThreshold):
         mask = cv2.inRange(playArea, np.array(self.mines[mineType][0]), np.array(self.mines[mineType][1]))
         cv2.imshow('mask', mask)
         kernel = np.ones((10, 10), np.uint8)
@@ -146,7 +226,7 @@ class Miner(Bot):
             #gets number of mines found
             area = cv2.contourArea(next)
             #500 just picked. Might need to adjust this
-            if area > 200:
+            if area > areaThreshold:
                 M = cv2.moments(next)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
@@ -156,8 +236,8 @@ class Miner(Bot):
 
 
     #**************************************************************************
-    def mineFindClosest(self, mineType, playArea):
-        mines = self.mineFindAll(mineType, playArea)
+    def mineFindClosest(self, mineType, playArea, areaThreshold):
+        mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
         if len(mines) > 0:
             closest = 10000
@@ -176,8 +256,8 @@ class Miner(Bot):
             return None
 
     #**************************************************************************
-    def mineFindRandom(self, mineType, playArea):
-        mines = self.mineFindAll(mineType, playArea)
+    def mineFindRandom(self, mineType, playArea, areaThreshold):
+        mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
         if len(mines) > 0:
             return random.choice(mines)['location']
