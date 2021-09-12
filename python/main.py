@@ -11,6 +11,7 @@ if len(sys.argv) != 2:
     print("usage: ./main.py profile.conf")
     exit(1)
 
+#signal handler is for aws to stop a bot
 def signalHandle(self, signal, frame):
     running = False
 
@@ -21,14 +22,12 @@ profile = Profile.Profile(sys.argv[1])
 window = RunescapeWindow.RunescapeWindow()
 window.worldPick()
 window.login(profile.emailGet(), profile.passwordGet())
+window.topViewSet()
 
-#sleeps a little to wait for runescape to load
-time.sleep(10)
-
-bot = Miner(profile, window)
+bot = Miner(profile, window, debug=True)
 
 while running:
-    bot.stepTest()
+    bot.step()
 
-#window.logout()
-#window.kill()
+window.logout()
+window.kill()

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 from pynput import mouse, keyboard
 import pyautogui
 import time
@@ -37,6 +38,7 @@ class InputRecord:
         self.mouseListener.stop()
         self.keyboardListener.stop()
 
+    #**************************************************************************
     def escWait(self):
         self.semaphore.acquire()
         self.semaphore.release()
@@ -59,10 +61,12 @@ class InputRecord:
 
     #**************************************************************************
     def onKeypress(self, key):
-        self.deque.append(Event.KeyPressedEvent(self.timeGet(), key))
+        if key != keyboard.Key.esc:
+            self.deque.append(Event.KeyPressedEvent(self.timeGet(), key))
 
     #**************************************************************************
     def onKeyrelease(self, key):
+        print("released: " + str(key))
         if key == keyboard.Key.esc:
             self.captureStop()
             self.semaphore.release()
@@ -76,12 +80,18 @@ class InputRecord:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("usage python3 inputReplay.py dataFile.dat")
+        exit(1)
+
+    filename = sys.argv[1]
     capture = InputRecord()
     input("press enter to start")
+    time.sleep(0.2)
     capture.captureStart()
     print("press esc to stop")
     capture.escWait()
     capture.captureStop()
 
     print("saving")
-    capture.save("test.csv")
+    capture.save(filename)

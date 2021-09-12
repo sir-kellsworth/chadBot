@@ -37,7 +37,7 @@ class Miner(Bot):
             'stairs': ([2, 46, 76], [6, 50, 80])
         }
         self.responTimes = {
-            'tin': 3,
+            'tin': 2.5,
             'cooper': 3,
             'iron': 5,
         }
@@ -53,7 +53,7 @@ class Miner(Bot):
         elif self.state == STATE_BANK_RUN:
             self.state = self.bankRun()
         elif self.state == STATE_BANK_DEPOSIT:
-            self.state = self.deposit()
+            self.state = self.bankDeposit()
         elif self.state == STATE_MINE_RUN:
             self.state = self.mineRun()
         else:
@@ -111,7 +111,7 @@ class Miner(Bot):
             print("no target found")
 
         cv2.imshow('debug window', debugWindow)
-        cv2.waitKey(2000)
+        cv2.waitKey(30)
 
     #**************************************************************************
     #description
@@ -134,7 +134,7 @@ class Miner(Bot):
         returnState = None
 
         if len(self.inventoryCheck()) < 27:
-            target = self.search('tin')
+            target = self.search('tin', areaThreshold=170)
             if self.debug:
                 self.targetDisplay(target)
             self.window.click(target, 'left')
@@ -154,9 +154,10 @@ class Miner(Bot):
     #   description - the next state
     def bankRun(self):
         bankMapLocation = (728, 54)
-        self.pathReplay('fromtintostairs')
+        self.pathReplay('fromtintobank')
         self.stairsClimb('up')
         self.window.click(bankMapLocation, 'left')
+        time.sleep(10)
 
         return STATE_BANK_DEPOSIT
 
@@ -177,7 +178,7 @@ class Miner(Bot):
             #first set of stairs, left click
             target = (target[0] + 20, target[1] + 20)
             self.window.click(target, 'left')
-            time.sleep(1)
+            time.sleep(2)
             #second set of stairs, right click
             target = self.search('stairs', areaThreshold=50)
             if self.debug:
@@ -188,9 +189,9 @@ class Miner(Bot):
             self.window.straightClick(upButton, 'left')
         elif direction == 'down':
             #first set of stairs, left click
-            target = (target[0] + 40, target[1] - 40)
+            target = (target[0] + 60, target[1] - 40)
             self.window.click(target, 'left')
-            time.sleep(1)
+            time.sleep(2)
             #second set of stairs, right click
             target = self.search('stairs', areaThreshold=50)
             if self.debug:
@@ -216,7 +217,7 @@ class Miner(Bot):
         if self.debug:
             self.targetDisplay(target)
         self.window.click(target, 'left')
-        time.sleep(1)
+        time.sleep(2)
         #click on deposit all button
         self.window.click(depositAllButton, 'left')
         time.sleep(1)
@@ -234,7 +235,7 @@ class Miner(Bot):
     def mineRun(self):
         stairsLocation = (700, 144)
         self.window.click(stairsLocation, 'left')
-        time.sleep(5)
+        time.sleep(10)
         self.stairsClimb('down')
         self.pathReplay('frombanktotin')
 
@@ -261,7 +262,7 @@ class Miner(Bot):
             elif time.time() > endTime:
                 mining = False
             else:
-                time.sleep(1)
+                time.sleep(0.3)
 
         time.sleep(respondTime)
 
@@ -280,7 +281,11 @@ class Miner(Bot):
     #   type        - pair of x,y
     #   description - window coordinates of where the targeted mine is
     def search(self, targetMine, areaThreshold = 200):
-        return self.mineFindClosest(targetMine, self.window.playAreaGet(), areaThreshold)
+        found = None
+        while found == None:
+            found = self.mineFindClosest(targetMine, self.window.playAreaGet(), areaThreshold)
+
+        return found
 
     #**************************************************************************
     #description

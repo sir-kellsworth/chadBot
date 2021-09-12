@@ -1,8 +1,7 @@
 #!/usr/bin/python
 import sys
 import os
-sys.path.append(os.path.join(sys.path[0], 'InputReplay/'))
-print(sys.path)
+sys.path.append(os.path.join(sys.path[0], '../InputReplay/'))
 from pynput import mouse, keyboard
 import pyautogui
 import time
@@ -14,8 +13,9 @@ import pickle
 class InputReplay:
     #**************************************************************************
     def __init__(self, filename):
-        file = open(filename, 'rb')
-        self.goldenCopy = pickle.load(file)
+        with open(filename, 'rb') as file:
+            self.goldenCopy = pickle.load(file)
+
         self.mouseController = mouse.Controller()
         self.keyboardController = keyboard.Controller()
 
@@ -44,7 +44,7 @@ class InputReplay:
 
     #**************************************************************************
     def eventHandleMove(self, event):
-        pyautogui.moveTo(event.location, duration=0.05, _pause=False)
+        pyautogui.moveTo(event.location, _pause=False)#, duration=0.05
 
     #**************************************************************************
     def eventHandleClick(self, event):
@@ -68,5 +68,10 @@ class InputReplay:
 
 
 if __name__ == "__main__":
-    capture = InputReplay("test.csv")
+    if len(sys.argv) != 2:
+        print("usage python3 inputReplay.py dataFile.dat")
+        exit(1)
+
+    filename = sys.argv[1]
+    capture = InputReplay(filename)
     capture.replay()
