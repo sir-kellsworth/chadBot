@@ -47,16 +47,19 @@ class RunescapeWindow:
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
-        existingUserButtonXOffset = 494
-        existingUserButtonYOffset = 340
-        loginXOffset = 338
-        loginYOffset = 368
-        existingUserButtonX = self.windowCorner[0] + existingUserButtonXOffset
-        existingUserButtonY = self.windowCorner[1] + existingUserButtonYOffset
-        loginButton = (self.windowCorner[0] + loginXOffset, self.windowCorner[1] + loginYOffset)
+        existingUserButton = (494, 340)
+        size = self.sizeGet()
+        existingUserScaled = (existingUserButton[0] / size[0], existingUserButton[1] / size[1])
+        print("**********")
+        print("existing user scaled: " + str(existingUserScaled))
+        print("**********")
         inventoryButton = (700, 612)
+        inventoryButtonScaled = (inventoryButton[0] / size[0], inventoryButton[1] / size[1])
+        print("**********")
+        print("inventory button scaled: " + str(inventoryButtonScaled))
+        print("**********")
 
-        self.mouse.click((existingUserButtonX, existingUserButtonY), 'left')
+        self.click(existingUserScaled, 'left')
         time.sleep(1)
         self.keyboard.type(username)
         time.sleep(0.5)
@@ -67,11 +70,11 @@ class RunescapeWindow:
         self.keyboard.enter()
         time.sleep(3)
         #there is another 'play button' after in pretty much the same location
-        self.mouse.click((existingUserButtonX, existingUserButtonY), 'left')
+        self.click(existingUserScaled, 'left')
         time.sleep(2)
 
         #also need to open the inventory
-        self.mouse.click(inventoryButton, 'left')
+        self.click(inventoryButtonScaled, 'left')
         time.sleep(1)
 
     #**************************************************************************
@@ -155,14 +158,17 @@ class RunescapeWindow:
     #   utilizes the HumanMouse to click somewhere on the screen. Assumes relative coordinates
     # parameters
     #   location
-    #       type        - pair of x,y
+    #       type        - pair of x,y floats, range [0-1]
     #       description - relitive coordinates on the window to click
     #   button
     #       type        - string
     #       description - 'left', 'right', 'middle' buttons to click after moving
     def click(self, location, button):
         corner = self.cornerGet()
-        location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)
+        size = self.sizeGet()
+        #offset is needed, otherwise it clicks on the corner of the object
+        offset = 20
+        location = ((location[0] * size[0]) + corner[0] + offset, (location[1] * size[1]) + corner[1] + offset)
         self.mouse.click(location, button)
 
     #**************************************************************************
@@ -170,12 +176,15 @@ class RunescapeWindow:
     #   does not use the HumanMouse. Just goes straight to the location and clicks
     # parameters
     #   location
-    #       type        - pair of x,y
+    #       type        - pair of x,y floats, range [0-1]
     #       description - relitive coordinates on the window to click
     #   button
     #       type        - string
     #       description - 'left', 'right', 'middle' buttons to click after moving
     def straightClick(self, location, button):
         corner = self.cornerGet()
-        location = (location[0] + corner[0] + 20, location[1] + corner[1] + 20)
+        size = self.sizeGet()
+        #offset is needed, otherwise it clicks on the corner of the object
+        offset = 20
+        location = ((location[0] * size[0]) + corner[0] + offset, (location[1] * size[1]) + corner[1] + offset)
         self.mouse.straightClick(location, button)
