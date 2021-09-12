@@ -45,7 +45,7 @@ class Miner(Bot):
         self.state = STATE_MINING
 
     #**************************************************************************
-    #description
+    # description
     #   preforms the next step in the state machine
     def step(self):
         if self.state == STATE_MINING:
@@ -60,13 +60,13 @@ class Miner(Bot):
             print("invalid state: " + str(self.state))
 
     #**************************************************************************
-    #description
+    # description
     #   returns the number of items in the inventory
     def numItemsGet(self):
         return len(self.inventoryCheck())
 
     #**************************************************************************
-    #description
+    # description
     #   returns a list of locations of all of the items in the inventory
     def inventoryCheck(self):
         inventory = self.window.inventoryAreaGet()
@@ -96,9 +96,9 @@ class Miner(Bot):
         return mineAreas
 
     #**************************************************************************
-    #description
+    # description
     #   displays a box around the target in a window called 'debug window'
-    #parameters
+    # parameters
     #   target
     #       type        - pair of x,y coordinates
     #       description - x,y coordinates to draw a box around to show what the bot is targeting
@@ -114,7 +114,7 @@ class Miner(Bot):
         cv2.waitKey(30)
 
     #**************************************************************************
-    #description
+    # description
     #   displays the mask of the inventory in a window called 'inventory mask'
     def inventoryDisplay(self):
         inventory = self.window.inventoryAreaGet()
@@ -125,7 +125,7 @@ class Miner(Bot):
         cv2.waitKey(30)
 
     #**************************************************************************
-    #description
+    # description
     #   checks to see if the inventory is full. If not, it searches for tin and mines it
     #returns
     #   type        - int
@@ -147,7 +147,7 @@ class Miner(Bot):
         return returnState
 
     #**************************************************************************
-    #description
+    # description
     #   runs to the bank and positions in front of the teller
     #returns
     #   type        - int
@@ -162,51 +162,56 @@ class Miner(Bot):
         return STATE_BANK_DEPOSIT
 
     #**************************************************************************
-    #description
+    # description
     #   climbs up or down 2 sets of stairs
-    #parameters
+    # parameters
     #   direction
     #       type        - string
     #       descriptoin - either 'up' or 'down'. Only works with double stairs
-    def stairsClimb(self, direction):
+    def stairsClimb(self, direction, numFlights):
+        #first flight should always be single direction
+        self.flightClimb(direction, True)
+        if numFlights > 1:
+            for i in range(numFlights):
+                self.flightClimb(direction, False)
+
+    #**************************************************************************
+    # description
+    #   climbs up or down a flight of stairs
+    # parameters
+    #   direction
+    #       type        - string
+    #       descriptoin - either 'up' or 'down'
+    #   isSingleDirection
+    #       type        - bool
+    #       description - single direction is either stairs at the bottom or top floor.
+    #                     not single direction is a mid-floor that could go either way
+    def flightClimb(self, direction, isSingleDirection):
         upButtonOffset = (0, 44)
         downButtonOffset = (0, 54)
+
         target = self.search('stairs', areaThreshold=50)
-        if self.debug:
-            self.targetDisplay(target)
-        if direction == 'up':
-            #first set of stairs, left click
-            target = (target[0] + 20, target[1] + 20)
+        self.targetDisplay(target)
+        if isSingleDirection:
+            if direction == 'up':
+                target = (target[0] + 20, target[1] + 20)
+            else:
+                target = (target[0] + 60, target[1] - 40)
             self.window.click(target, 'left')
-            time.sleep(2)
-            #second set of stairs, right click
-            target = self.search('stairs', areaThreshold=50)
-            if self.debug:
-                self.targetDisplay(target)
+        else:
             target = (target[0] + 20, target[1] + 20)
             self.window.click(target, 'right')
             upButton = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
-            self.window.straightClick(upButton, 'left')
-        elif direction == 'down':
-            #first set of stairs, left click
-            target = (target[0] + 60, target[1] - 40)
-            self.window.click(target, 'left')
-            time.sleep(2)
-            #second set of stairs, right click
-            target = self.search('stairs', areaThreshold=50)
-            if self.debug:
-                self.targetDisplay(target)
-            target = (target[0] + 20, target[1] + 20)
-            self.window.click(target, 'right')
-            downButton = (target[0] + downButtonOffset[0], target[1] + downButtonOffset[1])
-            self.window.straightClick(downButton, 'left')
+            if direction == 'up':
+                button = upButtonOffset
+            else:
+                button = downButtonOffset
+            self.window.straightClick(button, 'left')
 
-        time.sleep(1)
-
-
+        time.sleep(2)
 
     #**************************************************************************
-    #description
+    # description
     #   deposits everything in the inventory into the bank
     def bankDeposit(self):
         depositAllButton = (470, 461)
@@ -227,7 +232,7 @@ class Miner(Bot):
         return STATE_MINE_RUN
 
     #**************************************************************************
-    #description
+    # description
     #   runs from the bank, down the stairs and back to the mine
     #returns
     #   type        - int
@@ -242,10 +247,10 @@ class Miner(Bot):
         return STATE_MINING
 
     #**************************************************************************
-    #description
+    # description
     #   waits for the mine to respond, then checks to make sure its there again.
     #   if the mining process takes longer than 15 seconds, then it just returns
-    #parameters
+    # parameters
     #   respondTime
     #       type        - int
     #       description - how long to wait before returning
@@ -267,10 +272,10 @@ class Miner(Bot):
         time.sleep(respondTime)
 
     #**************************************************************************
-    #description
+    # description
     #   searches for the targeted mine. For now just does a simple pixel search.
     #   might need to do roaming later
-    #parameters
+    # parameters
     #   targetMine
     #       type        - string
     #       description - name of the 'self.mine' type to search for
@@ -288,9 +293,9 @@ class Miner(Bot):
         return found
 
     #**************************************************************************
-    #description
+    # description
     #   searches for the targeted mine. Returns all locations it finds
-    #parameters
+    # parameters
     #   mineType
     #       type        - string
     #       description - name of the 'self.mine' type to search for
@@ -329,9 +334,9 @@ class Miner(Bot):
 
 
     #**************************************************************************
-    #description
+    # description
     #   searches for the targeted mine. Returns location closest to the player
-    #parameters
+    # parameters
     #   mineType
     #       type        - string
     #       description - name of the 'self.mine' type to search for
@@ -364,9 +369,9 @@ class Miner(Bot):
             return None
 
     #**************************************************************************
-    #description
+    # description
     #   searches for the targeted mine. Returns random location it finds
-    #parameters
+    # parameters
     #   mineType
     #       type        - string
     #       description - name of the 'self.mine' type to search for
