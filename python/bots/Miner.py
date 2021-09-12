@@ -11,6 +11,18 @@ STATE_MINE_RUN = 3
 
 class Miner(Bot):
     #**************************************************************************
+    # description
+    #   constructor
+    # Parameters:
+    #   profile
+    #       type        - Profile
+    #       description - profile to load paths, what to mine, stuff like that
+    #   window
+    #       type        - RunescapeWindow
+    #       description - window to interact with
+    #   debug
+    #       type        - boolean
+    #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
         super().__init__(profile, window)
@@ -33,6 +45,8 @@ class Miner(Bot):
         self.state = STATE_MINING
 
     #**************************************************************************
+    #description
+    #   preforms the next step in the state machine
     def step(self):
         if self.state == STATE_MINING:
             self.state = self.mine()
@@ -46,6 +60,14 @@ class Miner(Bot):
             print("invalid state: " + str(self.state))
 
     #**************************************************************************
+    #description
+    #   returns the number of items in the inventory
+    def numItemsGet(self):
+        return len(self.inventoryCheck())
+
+    #**************************************************************************
+    #description
+    #   returns a list of locations of all of the items in the inventory
     def inventoryCheck(self):
         inventory = self.window.inventoryAreaGet()
         emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
@@ -74,6 +96,12 @@ class Miner(Bot):
         return mineAreas
 
     #**************************************************************************
+    #description
+    #   displays a box around the target in a window called 'debug window'
+    #parameters
+    #   target
+    #       type        - pair of x,y coordinates
+    #       description - x,y coordinates to draw a box around to show what the bot is targeting
     def targetDisplay(self, target):
         debugWindow = self.window.playAreaGet()
         if target != None:
@@ -86,15 +114,22 @@ class Miner(Bot):
         cv2.waitKey(2000)
 
     #**************************************************************************
+    #description
+    #   displays the mask of the inventory in a window called 'inventory mask'
     def inventoryDisplay(self):
         inventory = self.window.inventoryAreaGet()
         emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
 
         inventoryArea = cv2.bitwise_not(emptyMask)
-        cv2.imshow('inventory', inventoryArea)
+        cv2.imshow('inventory mask', inventoryArea)
         cv2.waitKey(30)
 
     #**************************************************************************
+    #description
+    #   checks to see if the inventory is full. If not, it searches for tin and mines it
+    #returns
+    #   type        - int
+    #   description - the next state
     def mine(self):
         returnState = None
 
@@ -112,6 +147,11 @@ class Miner(Bot):
         return returnState
 
     #**************************************************************************
+    #description
+    #   runs to the bank and positions in front of the teller
+    #returns
+    #   type        - int
+    #   description - the next state
     def bankRun(self):
         bankMapLocation = (728, 54)
         self.pathReplay('fromtintostairs')
@@ -121,6 +161,12 @@ class Miner(Bot):
         return STATE_BANK_DEPOSIT
 
     #**************************************************************************
+    #description
+    #   climbs up or down 2 sets of stairs
+    #parameters
+    #   direction
+    #       type        - string
+    #       descriptoin - either 'up' or 'down'. Only works with double stairs
     def stairsClimb(self, direction):
         upButtonOffset = (0, 44)
         downButtonOffset = (0, 54)
@@ -159,6 +205,8 @@ class Miner(Bot):
 
 
     #**************************************************************************
+    #description
+    #   deposits everything in the inventory into the bank
     def bankDeposit(self):
         depositAllButton = (470, 461)
         bankCloseButton = (510, 35)
@@ -178,6 +226,11 @@ class Miner(Bot):
         return STATE_MINE_RUN
 
     #**************************************************************************
+    #description
+    #   runs from the bank, down the stairs and back to the mine
+    #returns
+    #   type        - int
+    #   description - the next state
     def mineRun(self):
         stairsLocation = (700, 144)
         self.window.click(stairsLocation, 'left')
@@ -188,6 +241,13 @@ class Miner(Bot):
         return STATE_MINING
 
     #**************************************************************************
+    #description
+    #   waits for the mine to respond, then checks to make sure its there again.
+    #   if the mining process takes longer than 15 seconds, then it just returns
+    #parameters
+    #   respondTime
+    #       type        - int
+    #       description - how long to wait before returning
     def mineWait(self, respondTime):
         mining = True
         currentNum = len(self.inventoryCheck())
@@ -206,10 +266,38 @@ class Miner(Bot):
         time.sleep(respondTime)
 
     #**************************************************************************
+    #description
+    #   searches for the targeted mine. For now just does a simple pixel search.
+    #   might need to do roaming later
+    #parameters
+    #   targetMine
+    #       type        - string
+    #       description - name of the 'self.mine' type to search for
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    #returns
+    #   type        - pair of x,y
+    #   description - window coordinates of where the targeted mine is
     def search(self, targetMine, areaThreshold = 200):
         return self.mineFindClosest(targetMine, self.window.playAreaGet(), areaThreshold)
 
     #**************************************************************************
+    #description
+    #   searches for the targeted mine. Returns all locations it finds
+    #parameters
+    #   mineType
+    #       type        - string
+    #       description - name of the 'self.mine' type to search for
+    #   playArea
+    #       type        - np.array
+    #       description - area of the window to search
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    #returns
+    #   type        - list of pair of x,y
+    #   description - window coordinates of all mines found
     def mineFindAll(self, mineType, playArea, areaThreshold):
         mask = cv2.inRange(playArea, np.array(self.mines[mineType][0]), np.array(self.mines[mineType][1]))
         cv2.imshow('mask', mask)
@@ -236,6 +324,21 @@ class Miner(Bot):
 
 
     #**************************************************************************
+    #description
+    #   searches for the targeted mine. Returns location closest to the player
+    #parameters
+    #   mineType
+    #       type        - string
+    #       description - name of the 'self.mine' type to search for
+    #   playArea
+    #       type        - np.array
+    #       description - area of the window to search
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    #returns
+    #   type        - pair of x,y
+    #   description - window coordinates of the closest mines found
     def mineFindClosest(self, mineType, playArea, areaThreshold):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
@@ -256,6 +359,21 @@ class Miner(Bot):
             return None
 
     #**************************************************************************
+    #description
+    #   searches for the targeted mine. Returns random location it finds
+    #parameters
+    #   mineType
+    #       type        - string
+    #       description - name of the 'self.mine' type to search for
+    #   playArea
+    #       type        - np.array
+    #       description - area of the window to search
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    #returns
+    #   type        - pair of x,y
+    #   description - window coordinates of random mine found
     def mineFindRandom(self, mineType, playArea, areaThreshold):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
