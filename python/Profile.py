@@ -47,3 +47,6 @@ class Profile:
             paths.append({'PathName': key, 'File': path})
 
         return paths
+
+    def targetGet(self):
+        return self.config.get('Mining', 'target')

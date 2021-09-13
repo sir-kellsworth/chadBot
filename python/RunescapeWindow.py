@@ -73,7 +73,7 @@ class RunescapeWindow:
         self.keyboard.type(password)
         time.sleep(0.8)
         self.keyboard.enter()
-        time.sleep(5)
+        time.sleep(15)
         #there is another 'play button' after in pretty much the same location
         self.click(existingUserScaled, 'left')
         time.sleep(2)

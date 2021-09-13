@@ -25,6 +25,7 @@ class Miner(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
+        self.targetedMine = profile.targetGet()
         super().__init__(profile, window)
         #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
@@ -36,9 +37,13 @@ class Miner(Bot):
             'bankWindow': ([83, 114, 126], [91, 122, 134]),
             'stairs': ([2, 46, 76], [6, 50, 80])
         }
+        self.mineAreas = {
+            'tin': 170,
+            'cooper': 100
+        }
         self.responTimes = {
             'tin': 2.5,
-            'cooper': 3,
+            'cooper': 1.5,
             'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
@@ -131,11 +136,11 @@ class Miner(Bot):
         returnState = None
 
         if len(self.inventoryCheck()) < 27:
-            target = self.search('tin', areaThreshold=170)
+            target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             if self.debug:
                 self.targetDisplay(target)
             self.window.absoluteClick(target, 'left')
-            self.mineWait(self.responTimes['tin'])
+            self.mineWait(self.responTimes[self.targetedMine])
 
             returnState = STATE_MINING
         else:
