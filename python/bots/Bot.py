@@ -17,7 +17,7 @@ class Bot:
         #self.targetLocation = profile.targetLocationGet()
         self.paths = {}
         for path in profile.pathsGet():
-            self.paths[path['PathName']] = InputReplay(path['File'])
+            self.paths[path['PathName']] = InputReplay(path['File'], window)
         self.idleMessages = profile.idleMessagesGet()
         self.idleChance = profile.idleChanceGet()
 

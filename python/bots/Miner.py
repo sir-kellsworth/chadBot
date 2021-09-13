@@ -107,11 +107,8 @@ class Miner(Bot):
         if target != None:
             boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
-        else:
-            print("no target found")
-
-        cv2.imshow('debug window', debugWindow)
-        cv2.waitKey(30)
+            cv2.imshow('debug window', debugWindow)
+            cv2.waitKey(30)
 
     #**************************************************************************
     # description
@@ -137,7 +134,7 @@ class Miner(Bot):
             target = self.search('tin', areaThreshold=170)
             if self.debug:
                 self.targetDisplay(target)
-            self.window.click(target, 'left')
+            self.window.absoluteClick(target, 'left')
             self.mineWait(self.responTimes['tin'])
 
             returnState = STATE_MINING
@@ -153,10 +150,16 @@ class Miner(Bot):
     #   type        - int
     #   description - the next state
     def bankRun(self):
+        size = self.window.sizeGet()
         bankMapLocation = (728, 54)
+        bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
+        print("**********")
+        print("bank map button scaled: " + str(bankMapLocationScaled))
+        print("**********")
         self.pathReplay('fromtintobank')
-        self.stairsClimb('up')
-        self.window.click(bankMapLocation, 'left')
+        time.sleep(1)
+        self.stairsClimb('up', 2)
+        self.window.click(bankMapLocationScaled, 'left')
         time.sleep(10)
 
         return STATE_BANK_DEPOSIT
@@ -172,7 +175,7 @@ class Miner(Bot):
         #first flight should always be single direction
         self.flightClimb(direction, True)
         if numFlights > 1:
-            for i in range(numFlights):
+            for i in range(numFlights-1):
                 self.flightClimb(direction, False)
 
     #**************************************************************************
@@ -197,15 +200,15 @@ class Miner(Bot):
                 target = (target[0] + 20, target[1] + 20)
             else:
                 target = (target[0] + 60, target[1] - 40)
-            self.window.click(target, 'left')
+            self.window.absoluteClick(target, 'left')
         else:
             target = (target[0] + 20, target[1] + 20)
-            self.window.click(target, 'right')
-            upButton = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
+            self.window.absoluteClick(target, 'right')
             if direction == 'up':
-                button = upButtonOffset
+                button = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
             else:
-                button = downButtonOffset
+                button = (target[0] + downButtonOffset[0], target[1] + downButtonOffset[1])
+
             self.window.straightClick(button, 'left')
 
         time.sleep(2)
@@ -214,20 +217,29 @@ class Miner(Bot):
     # description
     #   deposits everything in the inventory into the bank
     def bankDeposit(self):
+        size = self.window.sizeGet()
         depositAllButton = (470, 461)
+        depositAllButtonScaled = (depositAllButton[0] / size[0], depositAllButton[1] / size[1])
+        print("**********")
+        print("deposit all button scaled: " + str(depositAllButtonScaled))
+        print("**********")
         bankCloseButton = (510, 35)
+        bankCloseButtonScaled = (bankCloseButton[0] / size[0], bankCloseButton[1] / size[1])
+        print("**********")
+        print("deposit all button scaled: " + str(bankCloseButtonScaled))
+        print("**********")
         #find bank window
         target = self.search('bankWindow', areaThreshold=100)
         #click on bank window
         if self.debug:
             self.targetDisplay(target)
-        self.window.click(target, 'left')
+        self.window.absoluteClick(target, 'left')
         time.sleep(2)
         #click on deposit all button
-        self.window.click(depositAllButton, 'left')
+        self.window.click(depositAllButtonScaled, 'left')
         time.sleep(1)
         #close bank window
-        self.window.click(bankCloseButton, 'left')
+        self.window.click(bankCloseButtonScaled, 'left')
 
         return STATE_MINE_RUN
 
@@ -238,11 +250,17 @@ class Miner(Bot):
     #   type        - int
     #   description - the next state
     def mineRun(self):
+        size = self.window.sizeGet()
         stairsLocation = (700, 144)
-        self.window.click(stairsLocation, 'left')
+        stairsLocationScaled = (stairsLocation[0] / size[0], stairsLocation[1] / size[1])
+        print("**********")
+        print("stairs location button scaled: " + str(stairsLocationScaled))
+        print("**********")
+        self.window.click(stairsLocationScaled, 'left')
         time.sleep(10)
-        self.stairsClimb('down')
+        self.stairsClimb('down', 2)
         self.pathReplay('frombanktotin')
+        time.sleep(1)
 
         return STATE_MINING
 
@@ -318,12 +336,13 @@ class Miner(Bot):
         mineAreas = []
         for next in contours:
             #good for debuging. Draws rectagles over the mines
-            x, y, w, h = cv2.boundingRect(next)
-            cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
+            if self.debug:
+                x, y, w, h = cv2.boundingRect(next)
+                cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
+                cv2.imshow('mask', closing)
 
             #gets number of mines found
             area = cv2.contourArea(next)
-            #500 just picked. Might need to adjust this
             if area > areaThreshold:
                 M = cv2.moments(next)
                 cx = int(M['m10'] / M['m00'])

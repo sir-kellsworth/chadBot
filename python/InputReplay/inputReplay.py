@@ -12,7 +12,9 @@ import pickle
 
 class InputReplay:
     #**************************************************************************
-    def __init__(self, filename):
+    def __init__(self, filename, window):
+        self.windowCorner = window.cornerGet()
+        self.windowSize = window.sizeGet()
         with open(filename, 'rb') as file:
             self.goldenCopy = pickle.load(file)
 
@@ -44,7 +46,11 @@ class InputReplay:
 
     #**************************************************************************
     def eventHandleMove(self, event):
-        pyautogui.moveTo(event.location, _pause=False)#, duration=0.05
+        location = (
+            (event.location[0] * self.windowSize[0]) + self.windowCorner[0],
+            (event.location[1] * self.windowSize[1]) + self.windowCorner[1]
+        )
+        pyautogui.moveTo(location, _pause=False)#, duration=0.05
 
     #**************************************************************************
     def eventHandleClick(self, event):

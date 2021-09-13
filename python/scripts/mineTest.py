@@ -9,7 +9,6 @@ from bots.Miner import Miner
 import Profile
 import RunescapeWindow
 import signal
-import sys
 import time
 
 STATE_MINING = 0
@@ -21,7 +20,7 @@ configFile = os.getcwd() + "/config/miner.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 
-bot = Miner(profile, window, debug=True)
+bot = Miner(profile, window, debug=False)
 
 while True:
     bot.step()
