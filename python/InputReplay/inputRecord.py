@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import sys
+import os
+sys.path.append(os.path.join(sys.path[0], '../InputReplay/'))
 from pynput import mouse, keyboard
 import pyautogui
 import time
@@ -12,9 +14,9 @@ import pickle
 class InputRecord:
     #**************************************************************************
     def __init__(self, window):
-        self.window = window
         self.windowCorner = window.cornerGet()
         self.windowSize = window.sizeGet()
+        self.windowRect = [self.windowCorner[0], self.windowCorner[1], self.windowSize[0], self.windowSize[1]]
         self.deque = collections.deque()
         self.mouseListener = mouse.Listener(
             on_move=self.onMove,
@@ -87,11 +89,15 @@ class InputRecord:
 
     #**************************************************************************
     def onKeyrelease(self, key):
-        if self.running and key == keyboard.Key.esc:
-            self.captureStop()
-            self.semaphore.release()
-
-        self.deque.append(Event.KeyReleasedEvent(self.timeGet(), key))
+        if self.running:
+            if key == keyboard.Key.esc:
+                self.captureStop()
+                self.semaphore.release()
+            else:
+                self.deque.append(Event.KeyReleasedEvent(self.timeGet(), key))
+        else:
+            if key == keyboard.Key.esc:
+                self.semaphore.release()
 
     #**************************************************************************
     def save(self, filename):

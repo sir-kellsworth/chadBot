@@ -47,8 +47,8 @@ class InputReplay:
     #**************************************************************************
     def eventHandleMove(self, event):
         location = (
-            (event.location[0] * self.windowSize()[0]) + self.windowCorner()[0],
-            (event.location[1] * self.windowSize()[1]) + self.windowCorner()[1]
+            (event.location[0] * self.windowSize[0]) + self.windowCorner[0],
+            (event.location[1] * self.windowSize[1]) + self.windowCorner[1]
         )
         pyautogui.moveTo(location, _pause=False)#, duration=0.05
 

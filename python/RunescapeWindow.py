@@ -32,33 +32,33 @@ class RunescapeWindow:
     #   selects a world (326)
     def worldPick(self):
         size = self.sizeGet()
-        worldPickButton = (87, 525)
-        worldPickButtonScaled = (worldPickButton[0] / size[0], worldPickButton[1] / size[1])
+        worldPickButton = (87, 500)
+        worldPickButtonScaled = (0.10622710622710622, 0.7396449704142012)#(worldPickButton[0] / size[0], worldPickButton[1] / size[1])
         print("**********")
-        print("world pick button scaled: " + str(worldPickButton))
+        print("world pick button scaled: " + str(worldPickButtonScaled))
         print("**********")
-        world326Button = (235, 120)
-        world326ButtonScaled = (world326Button[0] / size[0], world326Button[1] / size[1])
+        world326Button = (235, 80)
+        world326ButtonScaled = (0.2869352869352869, 0.11834319526627218)#(world326Button[0] / size[0], world326Button[1] / size[1])
         print("**********")
-        print("world pick button scaled: " + str(worldPickButton))
+        print("world pick button scaled: " + str(world326ButtonScaled))
         print("**********")
 
         self.click(worldPickButtonScaled, 'left')
-        time.sleep(2)
+        time.sleep(1)
         self.click(world326ButtonScaled, 'left')
-        time.sleep(2)
+        time.sleep(1)
 
     #**************************************************************************
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
         size = self.sizeGet()
-        existingUserButton = (494, 340)
+        existingUserButton = (494, 310)
         existingUserScaled = (existingUserButton[0] / size[0], existingUserButton[1] / size[1])
         print("**********")
         print("existing user scaled: " + str(existingUserScaled))
         print("**********")
-        inventoryButton = (700, 612)
+        inventoryButton = (700, 592)
         inventoryButtonScaled = (inventoryButton[0] / size[0], inventoryButton[1] / size[1])
         print("**********")
         print("inventory button scaled: " + str(inventoryButtonScaled))
@@ -73,7 +73,7 @@ class RunescapeWindow:
         self.keyboard.type(password)
         time.sleep(0.8)
         self.keyboard.enter()
-        time.sleep(3)
+        time.sleep(5)
         #there is another 'play button' after in pretty much the same location
         self.click(existingUserScaled, 'left')
         time.sleep(2)
@@ -163,7 +163,7 @@ class RunescapeWindow:
     #   utilizes the HumanMouse to click somewhere on the screen. Assumes relative coordinates
     # parameters
     #   location
-    #       type        - pair of x,y 
+    #       type        - pair of x,y
     #       description - relitive coordinates on the window to click
     #   button
     #       type        - string
@@ -172,7 +172,7 @@ class RunescapeWindow:
         corner = self.cornerGet()
         #offset is needed, otherwise it clicks on the corner of the object
         offset = 20
-        location = (location[0] + corner[0] + offset, location[1] + corner[1] + offset)
+        location = (int(location[0] + corner[0] + offset), int(location[1] + corner[1] + offset))
         self.mouse.click(location, button)
 
     #**************************************************************************
@@ -188,7 +188,7 @@ class RunescapeWindow:
     def click(self, location, button):
         size = self.sizeGet()
         location = ((location[0] * size[0]), (location[1] * size[1]))
-        self.absolutelick(location, button)
+        self.absoluteClick(location, button)
 
     #**************************************************************************
     # description
@@ -205,5 +205,5 @@ class RunescapeWindow:
         size = self.sizeGet()
         #offset is needed, otherwise it clicks on the corner of the object
         offset = 20
-        location = ((location[0] * size[0]) + corner[0] + offset, (location[1] * size[1]) + corner[1] + offset)
+        location = (location[0] + corner[0] + offset, location[1] + corner[1] + offset)
         self.mouse.straightClick(location, button)
