@@ -64,15 +64,15 @@ class InputRecord:
     #**************************************************************************
     def onMove(self, x, y):
         if self.running and self.mouseInsideWindow((x, y), self.windowRect):
-            x = x / self.size[0]
-            y = y / self.size[1]
+            x = (x - self.windowCorner[0]) / self.windowSize[0]
+            y = (y - self.windowCorner[1]) / self.windowSize[1]
             self.deque.append(Event.MouseMoveEvent(self.timeGet(), (x, y)))
 
     #**************************************************************************
     def onClick(self, x, y, button, pressed):
         if self.running and self.mouseInsideWindow((x, y), self.windowRect):
-            x = x / self.size[0]
-            y = y / self.size[1]
+            x = (x - self.windowCorner[0]) / self.windowSize[0]
+            y = (y - self.windowCorner[1]) / self.windowSize[1]
             self.deque.append(Event.MouseClickEvent(self.timeGet(), (x, y), button, pressed))
 
     #**************************************************************************
