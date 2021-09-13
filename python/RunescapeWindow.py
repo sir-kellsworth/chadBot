@@ -163,18 +163,32 @@ class RunescapeWindow:
     #   utilizes the HumanMouse to click somewhere on the screen. Assumes relative coordinates
     # parameters
     #   location
+    #       type        - pair of x,y 
+    #       description - relitive coordinates on the window to click
+    #   button
+    #       type        - string
+    #       description - 'left', 'right', 'middle' buttons to click after moving
+    def absoluteClick(self, location, button):
+        corner = self.cornerGet()
+        #offset is needed, otherwise it clicks on the corner of the object
+        offset = 20
+        location = (location[0] + corner[0] + offset, location[1] + corner[1] + offset)
+        self.mouse.click(location, button)
+
+    #**************************************************************************
+    # description
+    #   utilizes the HumanMouse to click somewhere on the screen. Assumes scaled down coordinates
+    # parameters
+    #   location
     #       type        - pair of x,y floats, range [0-1]
     #       description - relitive coordinates on the window to click
     #   button
     #       type        - string
     #       description - 'left', 'right', 'middle' buttons to click after moving
     def click(self, location, button):
-        corner = self.cornerGet()
         size = self.sizeGet()
-        #offset is needed, otherwise it clicks on the corner of the object
-        offset = 20
-        location = ((location[0] * size[0]) + corner[0] + offset, (location[1] * size[1]) + corner[1] + offset)
-        self.mouse.click(location, button)
+        location = ((location[0] * size[0]), (location[1] * size[1]))
+        self.absolutelick(location, button)
 
     #**************************************************************************
     # description
