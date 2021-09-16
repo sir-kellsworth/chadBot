@@ -12,18 +12,20 @@ class Profile:
     def __init__(self, configFile):
         self.config = configparser.ConfigParser()
         self.config.read(configFile)
+        self.login = configparser.ConfigParser()
+        self.login.read('config/login.config')
 
     #**************************************************************************
     # description
     #   returns the email from the config file
     def emailGet(self):
-        return self.config.get('Email', 'email')
+        return self.login.get('Email', 'email')
 
     #**************************************************************************
     # description
     #  returns the password for the runescape account
     def passwordGet(self):
-        return self.config.get('Login', 'password')
+        return self.login.get('Runescape', 'password')
 
     #**************************************************************************
     # description
