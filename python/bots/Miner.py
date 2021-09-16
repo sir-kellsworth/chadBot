@@ -31,7 +31,7 @@ class Miner(Bot):
         self.state = STATE_IDLE
         self.mines = {
             'tin':    ([54, 54, 64], [78, 78, 98]),
-            'copper': ([50, 91, 139], [64, 105, 153]),
+            'copper': ([40, 85, 130], [64, 105, 153]),#([50, 91, 139], [64, 105, 153]),
             #'iron':   ([7, 138, 50], [10, 146, 85]),
             #'gems':   ([150, 223, 61], [151, 235, 169]),
             'bankWindow': ([99, 112, 122], [111, 150, 140]),
@@ -44,7 +44,7 @@ class Miner(Bot):
         }
         self.responTimes = {
             'tin': 2.5,
-            'copper': 1.5,
+            'copper': 2.5,
             'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
@@ -111,7 +111,10 @@ class Miner(Bot):
     def targetDisplay(self, target):
         debugWindow = self.window.playAreaGet()
         if target != None and self.debug:
-            boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
+            center = target['center']
+            halfWidth = target['size'][0] // 2
+            halfHeight = target['size'][1] // 2
+            boundingBox = (center[0] - halfWidth, center[1] - halfHeight, center[0] + halfWidth, center[1] + halfHeight)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
             cv2.waitKey(60)
@@ -130,7 +133,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   checks to see if the inventory is full. If not, it searches for tin and mines it
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def mine(self):
@@ -139,7 +142,7 @@ class Miner(Bot):
         if self.numItemsGet() < 27:
             target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             self.targetDisplay(target)
-            self.window.absoluteClick(target, 'left')
+            self.window.straightClick(self.randomPointSelect(target), 'left')
             self.mineWait(self.responTimes[self.targetedMine])
 
             returnState = STATE_MINING
@@ -151,7 +154,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   runs to the bank and positions in front of the teller
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def bankRun(self):
@@ -199,20 +202,21 @@ class Miner(Bot):
         downButtonOffset = (0, 54)
 
         target = self.search('stairs', areaThreshold=50)
+        center = target['center']
         self.targetDisplay(target)
         if isSingleDirection:
             if direction == 'up':
-                target = (target[0] + 20, target[1] + 20)
+                center = (center[0] + 20, center[1] + 20)
             else:
-                target = (target[0] + 40, target[1] - 40)
-            self.window.absoluteClick(target, 'left')
+                center = (center[0] + 40, center[1] - 40)
+            self.window.absoluteClick(center, 'left')
         else:
-            target = (target[0] + 20, target[1] + 20)
-            self.window.absoluteClick(target, 'right')
+            center = (center[0] + 20, center[1] + 20)
+            self.window.absoluteClick(center, 'right')
             if direction == 'up':
-                button = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
+                button = (center[0] + upButtonOffset[0], center[1] + upButtonOffset[1])
             else:
-                button = (target[0] + downButtonOffset[0], target[1] + downButtonOffset[1])
+                button = (center[0] + downButtonOffset[0], center[1] + downButtonOffset[1])
 
             self.window.straightClick(button, 'left')
 
@@ -237,7 +241,7 @@ class Miner(Bot):
         target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
         #click on bank window
         self.targetDisplay(target)
-        self.window.absoluteClick(target, 'left')
+        self.window.absoluteClick(self.randomPointSelect(target), 'left')
         time.sleep(2)
         #click on deposit all button
         self.window.click(depositAllButtonScaled, 'left')
@@ -250,7 +254,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   runs from the bank, down the stairs and back to the mine
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def mineRun(self):
@@ -278,20 +282,20 @@ class Miner(Bot):
     #       description - how long to wait before returning
     def mineWait(self, respondTime):
         mining = True
-        currentNum = len(self.inventoryCheck())
+        currentNum = self.numItemsGet()
 
         endTime = time.time() + 15
         while mining:
-            numItems = len(self.inventoryCheck())
-            if numItems > currentNum:
+            if self.numItemsGet() > currentNum:
                 mining = False
+                time.sleep(respondTime)
+                return
             #make sure it doesnt break if someone mines it before we do
-            elif time.time() > endTime:
+            if time.time() > endTime:
                 mining = False
-            else:
-                time.sleep(0.3)
+                return
 
-        time.sleep(respondTime)
+            time.sleep(0.3)
 
     #**************************************************************************
     # description
@@ -304,9 +308,9 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
-    #   type        - pair of x,y
-    #   description - window coordinates of where the targeted mine is
+    # returns
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size'
     def search(self, targetMine, areaThreshold = 200):
         found = None
         while found == None:
@@ -327,9 +331,9 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
-    #   type        - list of pair of x,y
-    #   description - window coordinates of all mines found
+    # returns
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size' of closest mine
     def mineFindAll(self, mineType, playArea, areaThreshold):
         mask = cv2.inRange(playArea, np.array(self.mines[mineType][0]), np.array(self.mines[mineType][1]))
         cv2.imshow('mask', mask)
@@ -339,9 +343,9 @@ class Miner(Bot):
         contours, _ = cv2.findContours(closing.copy(), 1, 2)
         mineAreas = []
         for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
-                x, y, w, h = cv2.boundingRect(next)
                 cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
                 cv2.imshow('mask', closing)
 
@@ -349,9 +353,9 @@ class Miner(Bot):
             area = cv2.contourArea(next)
             if area > areaThreshold:
                 M = cv2.moments(next)
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
-                mineAreas.append({'area': area, 'location': (cx, cy)})
+                centerX = int(M['m10'] / M['m00'])
+                centerY = int(M['m01'] / M['m00'])
+                mineAreas.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
 
         return mineAreas
 
@@ -369,9 +373,9 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
-    #   type        - pair of x,y
-    #   description - window coordinates of the closest mines found
+    # returns
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size'
     def mineFindClosest(self, mineType, playArea, areaThreshold):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
@@ -382,11 +386,11 @@ class Miner(Bot):
             playerX = (playAreaShape[0] / 2) + 50
             playerY = (playAreaShape[1] / 2) + 50
             for next in mines:
-                mineLocation = next['location']
+                mineLocation = next['center']
                 distance = math.sqrt((playerX - mineLocation[0])**2 + (playerY - mineLocation[1])**2)
                 if distance < closest:
                     closest = distance
-                    target = mineLocation
+                    target = next
             return target
         else:
             return None
@@ -404,13 +408,43 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
+    # returns
     #   type        - pair of x,y
     #   description - window coordinates of random mine found
     def mineFindRandom(self, mineType, playArea, areaThreshold):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
         if len(mines) > 0:
-            return random.choice(mines)['location']
+            return random.choice(mines)
         else:
             return None
+
+    #**************************************************************************
+    # description
+    #   returns a random point in the target area
+    # parameters
+    #   target
+    #       type        - dict
+    #       description - dict from mineFindAll
+    # returns
+    #   type            - pair of x,y
+    #   description     - random coordinates from inside the target rectangle
+    def randomPointSelect(self, target):
+        center = target['center']
+        size = target['size']
+
+        #all of this is to avoid accidentally clicking outside the object bounds
+        widthMin = center[0] - (size[1] // 2)
+        widthMax = center[0] + (size[1] // 2)
+        if widthMin + 10 > widthMax - 10:
+            widthMin -= 10
+            widthMax -= 10
+        heightMin = center[1] - (size[0] // 2)
+        heightMax = center[1] + (size[0] // 2)
+        if heightMin + 10 > heightMax - 10:
+            widthMin -= 10
+            widthMax -= 10
+        randomWidth = random.randint(widthMin, widthMax)
+        randomHeight = random.randint(heightMin, heightMax)
+
+        return (randomWidth, randomHeight)
