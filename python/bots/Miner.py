@@ -241,7 +241,7 @@ class Miner(Bot):
         target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
         #click on bank window
         self.targetDisplay(target)
-        self.window.absoluteClick(target['center'], 'left')
+        self.window.absoluteClick(self.randomPointSelect(target), 'left')
         time.sleep(2)
         #click on deposit all button
         self.window.click(depositAllButtonScaled, 'left')
