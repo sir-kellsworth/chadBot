@@ -281,20 +281,20 @@ class Miner(Bot):
     #       description - how long to wait before returning
     def mineWait(self, respondTime):
         mining = True
-        currentNum = len(self.inventoryCheck())
+        currentNum = self.numItemsGet()
 
         endTime = time.time() + 15
         while mining:
-            numItems = len(self.inventoryCheck())
-            if numItems > currentNum:
+            if self.numItemsGet() > currentNum:
                 mining = False
+                time.sleep(respondTime)
+                return
             #make sure it doesnt break if someone mines it before we do
-            elif time.time() > endTime:
+            if time.time() > endTime:
                 mining = False
-            else:
-                time.sleep(0.3)
+                return
 
-        time.sleep(respondTime)
+            time.sleep(0.3)
 
     #**************************************************************************
     # description
@@ -308,8 +308,8 @@ class Miner(Bot):
     #       type        - int
     #       description - minimum area of contour to look for
     #returns
-    #   type        - pair of x,y
-    #   description - window coordinates of where the targeted mine is
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size'
     def search(self, targetMine, areaThreshold = 200):
         found = None
         while found == None:
@@ -331,8 +331,8 @@ class Miner(Bot):
     #       type        - int
     #       description - minimum area of contour to look for
     #returns
-    #   type        - list of pair of x,y
-    #   description - window coordinates of all mines found
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size' of closest mine
     def mineFindAll(self, mineType, playArea, areaThreshold):
         mask = cv2.inRange(playArea, np.array(self.mines[mineType][0]), np.array(self.mines[mineType][1]))
         cv2.imshow('mask', mask)
@@ -373,8 +373,8 @@ class Miner(Bot):
     #       type        - int
     #       description - minimum area of contour to look for
     #returns
-    #   type        - pair of x,y
-    #   description - window coordinates of the closest mines found
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - dictionary of 'center', 'area' and 'size'
     def mineFindClosest(self, mineType, playArea, areaThreshold):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
