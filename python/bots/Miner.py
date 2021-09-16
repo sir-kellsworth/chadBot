@@ -111,7 +111,9 @@ class Miner(Bot):
     def targetDisplay(self, target):
         debugWindow = self.window.playAreaGet()
         if target != None and self.debug:
-            boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
+            halfWidth = target['size'][0] / 2
+            halfHeight = target['size'][1] / 2
+            boundingBox = (target[0] - halfWidth, target[1] - halfHeight, target[0] + halfWidth, target[1] + halfHeight)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
             cv2.waitKey(60)
@@ -139,7 +141,7 @@ class Miner(Bot):
         if self.numItemsGet() < 27:
             target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             self.targetDisplay(target)
-            self.window.absoluteClick(target, 'left')
+            self.window.absoluteClick(target['center'], 'left')
             self.mineWait(self.responTimes[self.targetedMine])
 
             returnState = STATE_MINING
@@ -199,20 +201,21 @@ class Miner(Bot):
         downButtonOffset = (0, 54)
 
         target = self.search('stairs', areaThreshold=50)
+        center = target['center']
         self.targetDisplay(target)
         if isSingleDirection:
             if direction == 'up':
-                target = (target[0] + 20, target[1] + 20)
+                center = (center[0] + 20, center[1] + 20)
             else:
-                target = (target[0] + 40, target[1] - 40)
+                center = (center[0] + 40, center[1] - 40)
             self.window.absoluteClick(target, 'left')
         else:
-            target = (target[0] + 20, target[1] + 20)
-            self.window.absoluteClick(target, 'right')
+            center = (center[0] + 20, center[1] + 20)
+            self.window.absoluteClick(center, 'right')
             if direction == 'up':
-                button = (target[0] + upButtonOffset[0], target[1] + upButtonOffset[1])
+                button = (center[0] + upButtonOffset[0], center[1] + upButtonOffset[1])
             else:
-                button = (target[0] + downButtonOffset[0], target[1] + downButtonOffset[1])
+                button = (center[0] + downButtonOffset[0], center[1] + downButtonOffset[1])
 
             self.window.straightClick(button, 'left')
 
@@ -237,7 +240,7 @@ class Miner(Bot):
         target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
         #click on bank window
         self.targetDisplay(target)
-        self.window.absoluteClick(target, 'left')
+        self.window.absoluteClick(target['center'], 'left')
         time.sleep(2)
         #click on deposit all button
         self.window.click(depositAllButtonScaled, 'left')
@@ -349,9 +352,9 @@ class Miner(Bot):
             area = cv2.contourArea(next)
             if area > areaThreshold:
                 M = cv2.moments(next)
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
-                mineAreas.append({'area': area, 'location': (cx, cy)})
+                centerX = int(M['m10'] / M['m00'])
+                centerY = int(M['m01'] / M['m00'])
+                mineAreas.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
 
         return mineAreas
 
@@ -382,11 +385,11 @@ class Miner(Bot):
             playerX = (playAreaShape[0] / 2) + 50
             playerY = (playAreaShape[1] / 2) + 50
             for next in mines:
-                mineLocation = next['location']
+                mineLocation = next['center']
                 distance = math.sqrt((playerX - mineLocation[0])**2 + (playerY - mineLocation[1])**2)
                 if distance < closest:
                     closest = distance
-                    target = mineLocation
+                    target = next
             return target
         else:
             return None
@@ -411,6 +414,6 @@ class Miner(Bot):
         mines = self.mineFindAll(mineType, playArea, areaThreshold)
 
         if len(mines) > 0:
-            return random.choice(mines)['location']
+            return random.choice(mines)
         else:
             return None
