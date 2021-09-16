@@ -20,7 +20,7 @@ configFile = os.getcwd() + "/config/miner.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 
-bot = Miner(profile, window, debug=False)
+bot = Miner(profile, window, debug=True)
 
 while True:
     bot.step()

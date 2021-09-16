@@ -44,7 +44,7 @@ class Miner(Bot):
         }
         self.responTimes = {
             'tin': 2.5,
-            'copper': 1.5,
+            'copper': 1,
             'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
@@ -111,9 +111,10 @@ class Miner(Bot):
     def targetDisplay(self, target):
         debugWindow = self.window.playAreaGet()
         if target != None and self.debug:
-            halfWidth = target['size'][0] / 2
-            halfHeight = target['size'][1] / 2
-            boundingBox = (target[0] - halfWidth, target[1] - halfHeight, target[0] + halfWidth, target[1] + halfHeight)
+            center = target['center']
+            halfWidth = target['size'][0] // 2
+            halfHeight = target['size'][1] // 2
+            boundingBox = (center[0] - halfWidth, center[1] - halfHeight, center[0] + halfWidth, center[1] + halfHeight)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
             cv2.waitKey(60)
@@ -208,7 +209,7 @@ class Miner(Bot):
                 center = (center[0] + 20, center[1] + 20)
             else:
                 center = (center[0] + 40, center[1] - 40)
-            self.window.absoluteClick(target, 'left')
+            self.window.absoluteClick(center, 'left')
         else:
             center = (center[0] + 20, center[1] + 20)
             self.window.absoluteClick(center, 'right')
@@ -342,9 +343,9 @@ class Miner(Bot):
         contours, _ = cv2.findContours(closing.copy(), 1, 2)
         mineAreas = []
         for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
-                x, y, w, h = cv2.boundingRect(next)
                 cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
                 cv2.imshow('mask', closing)
 
