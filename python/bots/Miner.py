@@ -31,7 +31,7 @@ class Miner(Bot):
         self.state = STATE_IDLE
         self.mines = {
             'tin':    ([54, 54, 64], [78, 78, 98]),
-            'copper': ([48, 89, 137], [66, 107, 155]),#([50, 91, 139], [64, 105, 153]),
+            'copper': ([40, 85, 130], [64, 105, 153]),#([50, 91, 139], [64, 105, 153]),
             #'iron':   ([7, 138, 50], [10, 146, 85]),
             #'gems':   ([150, 223, 61], [151, 235, 169]),
             'bankWindow': ([99, 112, 122], [111, 150, 140]),
@@ -44,7 +44,7 @@ class Miner(Bot):
         }
         self.responTimes = {
             'tin': 2.5,
-            'copper': 1,
+            'copper': 2.5,
             'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
@@ -142,7 +142,7 @@ class Miner(Bot):
         if self.numItemsGet() < 27:
             target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             self.targetDisplay(target)
-            self.window.absoluteClick(self.randomPointSelect(target), 'left')
+            self.window.straightClick(self.randomPointSelect(target), 'left')
             self.mineWait(self.responTimes[self.targetedMine])
 
             returnState = STATE_MINING
@@ -433,7 +433,18 @@ class Miner(Bot):
         center = target['center']
         size = target['size']
 
-        randomWidth = random.randint(center[0] - size[0], center[0] + size[0])
-        randomHeight = random.randint(center[1] - size[1], center[1] + size[1])
+        #all of this is to avoid accidentally clicking outside the object bounds
+        widthMin = center[0] - (size[1] // 2)
+        widthMax = center[0] + (size[1] // 2)
+        if widthMin + 10 > widthMax - 10:
+            widthMin -= 10
+            widthMax -= 10
+        heightMin = center[1] - (size[0] // 2)
+        heightMax = center[1] + (size[0] // 2)
+        if heightMin + 10 > heightMax - 10:
+            widthMin -= 10
+            widthMax -= 10
+        randomWidth = random.randint(widthMin, widthMax)
+        randomHeight = random.randint(heightMin, heightMax)
 
         return (randomWidth, randomHeight)
