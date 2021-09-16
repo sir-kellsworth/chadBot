@@ -31,19 +31,20 @@ class Miner(Bot):
         self.state = STATE_IDLE
         self.mines = {
             'tin':    ([54, 54, 64], [78, 78, 98]),
-            'cooper': ([50, 91, 139], [64, 105, 153]),
+            'copper': ([50, 91, 139], [64, 105, 153]),
             #'iron':   ([7, 138, 50], [10, 146, 85]),
             #'gems':   ([150, 223, 61], [151, 235, 169]),
-            'bankWindow': ([83, 114, 126], [91, 122, 134]),
+            'bankWindow': ([99, 112, 122], [111, 150, 140]),
             'stairs': ([2, 46, 76], [6, 50, 80])
         }
         self.mineAreas = {
             'tin': 170,
-            'cooper': 100
+            'copper': 40,
+            'bankWindow': 10
         }
         self.responTimes = {
             'tin': 2.5,
-            'cooper': 1.5,
+            'copper': 1.5,
             'iron': 5,
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
@@ -109,11 +110,11 @@ class Miner(Bot):
     #       description - x,y coordinates to draw a box around to show what the bot is targeting
     def targetDisplay(self, target):
         debugWindow = self.window.playAreaGet()
-        if target != None:
+        if target != None and self.debug:
             boundingBox = (target[0] - 50, target[1] - 50, target[0] + 50, target[1] + 50)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
-            cv2.waitKey(30)
+            cv2.waitKey(60)
 
     #**************************************************************************
     # description
@@ -135,10 +136,9 @@ class Miner(Bot):
     def mine(self):
         returnState = None
 
-        if len(self.inventoryCheck()) < 27:
+        if self.numItemsGet() < 27:
             target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
-            if self.debug:
-                self.targetDisplay(target)
+            self.targetDisplay(target)
             self.window.absoluteClick(target, 'left')
             self.mineWait(self.responTimes[self.targetedMine])
 
@@ -204,7 +204,7 @@ class Miner(Bot):
             if direction == 'up':
                 target = (target[0] + 20, target[1] + 20)
             else:
-                target = (target[0] + 60, target[1] - 40)
+                target = (target[0] + 40, target[1] - 40)
             self.window.absoluteClick(target, 'left')
         else:
             target = (target[0] + 20, target[1] + 20)
@@ -234,10 +234,9 @@ class Miner(Bot):
         print("deposit all button scaled: " + str(bankCloseButtonScaled))
         print("**********")
         #find bank window
-        target = self.search('bankWindow', areaThreshold=100)
+        target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
         #click on bank window
-        if self.debug:
-            self.targetDisplay(target)
+        self.targetDisplay(target)
         self.window.absoluteClick(target, 'left')
         time.sleep(2)
         #click on deposit all button
