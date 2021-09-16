@@ -132,7 +132,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   checks to see if the inventory is full. If not, it searches for tin and mines it
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def mine(self):
@@ -141,7 +141,7 @@ class Miner(Bot):
         if self.numItemsGet() < 27:
             target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             self.targetDisplay(target)
-            self.window.absoluteClick(target['center'], 'left')
+            self.window.absoluteClick(self.randomPointSelect(target), 'left')
             self.mineWait(self.responTimes[self.targetedMine])
 
             returnState = STATE_MINING
@@ -153,7 +153,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   runs to the bank and positions in front of the teller
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def bankRun(self):
@@ -253,7 +253,7 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   runs from the bank, down the stairs and back to the mine
-    #returns
+    # returns
     #   type        - int
     #   description - the next state
     def mineRun(self):
@@ -307,7 +307,7 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
+    # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     #   description - dictionary of 'center', 'area' and 'size'
     def search(self, targetMine, areaThreshold = 200):
@@ -330,7 +330,7 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
+    # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     #   description - dictionary of 'center', 'area' and 'size' of closest mine
     def mineFindAll(self, mineType, playArea, areaThreshold):
@@ -372,7 +372,7 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
+    # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     #   description - dictionary of 'center', 'area' and 'size'
     def mineFindClosest(self, mineType, playArea, areaThreshold):
@@ -407,7 +407,7 @@ class Miner(Bot):
     #   areaThreshold
     #       type        - int
     #       description - minimum area of contour to look for
-    #returns
+    # returns
     #   type        - pair of x,y
     #   description - window coordinates of random mine found
     def mineFindRandom(self, mineType, playArea, areaThreshold):
@@ -417,3 +417,22 @@ class Miner(Bot):
             return random.choice(mines)
         else:
             return None
+
+    #**************************************************************************
+    # description
+    #   returns a random point in the target area
+    # parameters
+    #   target
+    #       type        - dict
+    #       description - dict from mineFindAll
+    # returns
+    #   type            - pair of x,y
+    #   description     - random coordinates from inside the target rectangle
+    def randomPointSelect(self, target):
+        center = target['center']
+        size = target['size']
+
+        randomWidth = random.randint(center[0] - size[0], center[0] + size[0])
+        randomHeight = random.randint(center[1] - size[1], center[1] + size[1])
+
+        return (randomWidth, randomHeight)
