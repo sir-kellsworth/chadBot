@@ -5,4 +5,5 @@ import RunescapeWindow
 
 window = RunescapeWindow.RunescapeWindow()
 window.worldPick()
+exit(1)
 window.login("chadsbutt@gmail.com", "McDemShoulders")

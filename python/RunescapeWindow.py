@@ -6,6 +6,7 @@ import subprocess
 import numpy as np
 import cv2
 from PIL import ImageGrab
+import random
 
 from Mouse.HumanMouse import HumanMouse
 from Keyboard import Keyboard
@@ -31,6 +32,39 @@ class RunescapeWindow:
     # description
     #   selects a world (326)
     def worldPick(self):
+        screen = self.screenGet()
+        gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+        #reduces the color range to highlight button areas
+        _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
+        buttons = self.buttonsFind(thrash, 3000, 5000)
+
+        worldButton = None
+        existingUserButton = None
+        leftmost = 10000
+        rightmost = 0
+        for button in buttons:
+            if button['center'][0] < leftmost:
+                worldButton = button
+                leftmost = button['center'][0]
+            if button['center'][0] > rightmost:
+                existingUserButton = button
+                rightmost = button['center'][0]
+        self.absoluteClick(worldButton['center'], 'left')
+        time.sleep(1)
+
+        #next find only the free (white) worlds
+        screen = self.screenGet()
+        freeMask = cv2.inRange(screen, np.array((150, 150, 150)), np.array((220, 220, 220)))
+        freeWorlds = cv2.bitwise_not(freeMask)
+        freeWorldButtons = self.buttonsFind(freeWorlds, 50, 60)
+        print("found " + str(len(freeWorldButtons)) + " buttons")
+
+        choice = random.choice(freeWorldButtons)['center']
+        print(choice)
+        self.absoluteClick(choice, 'left')
+        time.sleep(10)
+
+        exit(1)
         size = self.sizeGet()
         worldPickButton = (87, 500)
         worldPickButtonScaled = (0.10622710622710622, 0.7396449704142012)#(worldPickButton[0] / size[0], worldPickButton[1] / size[1])
@@ -47,6 +81,21 @@ class RunescapeWindow:
         time.sleep(1)
         self.click(world326ButtonScaled, 'left')
         time.sleep(1)
+
+    def buttonsFind(self, screen, buttonLower, buttonLarger):
+        contours, _ = cv2.findContours(screen, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        buttons = []
+        for next in contours:
+            area = cv2.contourArea(next)
+            #this is to filter out some of the random boxes found
+            if area > buttonLower and area < buttonLarger:
+                x, y, w, h = cv2.boundingRect(next)
+                cv2.rectangle(screen, (x, y), (x+w, y+h), (0, 0, 255), 5)
+                centerX = x - 10# (w // 2)
+                centerY = y - 10# (h // 2)
+                buttons.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
+
+        return buttons
 
     #**************************************************************************
     # description
@@ -137,6 +186,15 @@ class RunescapeWindow:
     #   returns the size of the runescape window
     def sizeGet(self):
         return (self.window.get_geometry().width, self.window.get_geometry().height)
+
+    #**************************************************************************
+    # description
+    #   returns the entire runescape window
+    def screenGet(self):
+        corner = self.cornerGet()
+        size = self.sizeGet()
+        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
     # description
