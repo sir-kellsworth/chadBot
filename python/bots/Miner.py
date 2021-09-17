@@ -159,7 +159,7 @@ class Miner(Bot):
     #   description - the next state
     def bankRun(self):
         size = self.window.sizeGet()
-        bankMapLocation = (728, 54)
+        bankMapLocation = (748, 74)
         bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
         print("**********")
         print("bank map button scaled: " + str(bankMapLocationScaled))
@@ -198,8 +198,8 @@ class Miner(Bot):
     #       description - single direction is either stairs at the bottom or top floor.
     #                     not single direction is a mid-floor that could go either way
     def flightClimb(self, direction, isSingleDirection):
-        upButtonOffset = (0, 44)
-        downButtonOffset = (0, 54)
+        upButtonOffset = (0, 24)
+        downButtonOffset = (0, 34)
 
         target = self.search('stairs', areaThreshold=50)
         center = target['center']
@@ -208,7 +208,7 @@ class Miner(Bot):
             if direction == 'up':
                 center = (center[0] + 20, center[1] + 20)
             else:
-                center = (center[0] + 40, center[1] - 40)
+                center = (center[0] + 60, center[1] - 30)
             self.window.absoluteClick(center, 'left')
         else:
             center = (center[0] + 20, center[1] + 20)
@@ -227,12 +227,12 @@ class Miner(Bot):
     #   deposits everything in the inventory into the bank
     def bankDeposit(self):
         size = self.window.sizeGet()
-        depositAllButton = (470, 461)
+        depositAllButton = (490, 481)
         depositAllButtonScaled = (depositAllButton[0] / size[0], depositAllButton[1] / size[1])
         print("**********")
         print("deposit all button scaled: " + str(depositAllButtonScaled))
         print("**********")
-        bankCloseButton = (510, 35)
+        bankCloseButton = (530, 55)
         bankCloseButtonScaled = (bankCloseButton[0] / size[0], bankCloseButton[1] / size[1])
         print("**********")
         print("deposit all button scaled: " + str(bankCloseButtonScaled))
@@ -259,13 +259,13 @@ class Miner(Bot):
     #   description - the next state
     def mineRun(self):
         size = self.window.sizeGet()
-        stairsLocation = (700, 144)
+        stairsLocation = (720, 164)
         stairsLocationScaled = (stairsLocation[0] / size[0], stairsLocation[1] / size[1])
         print("**********")
         print("stairs location button scaled: " + str(stairsLocationScaled))
         print("**********")
         self.window.click(stairsLocationScaled, 'left')
-        time.sleep(10)
+        time.sleep(9)
         self.stairsClimb('down', 2)
         self.pathReplay('frombanktotin')
         time.sleep(1)
@@ -434,16 +434,16 @@ class Miner(Bot):
         size = target['size']
 
         #all of this is to avoid accidentally clicking outside the object bounds
-        widthMin = center[0] - (size[1] // 2)
-        widthMax = center[0] + (size[1] // 2)
-        if widthMin + 10 > widthMax - 10:
-            widthMin -= 10
-            widthMax -= 10
-        heightMin = center[1] - (size[0] // 2)
-        heightMax = center[1] + (size[0] // 2)
-        if heightMin + 10 > heightMax - 10:
-            widthMin -= 10
-            widthMax -= 10
+        widthMin = center[0] + (size[0] // 2)
+        widthMax = center[0] + (size[0] // 2)
+        #if widthMin + 15 > widthMax - 15:
+        #    widthMin += 15
+        #    widthMax -= 15
+        heightMin = center[1] + (size[1] // 2)
+        heightMax = center[1] + (size[1] // 2)
+        #if heightMin + 15 > heightMax - 15:
+        #    widthMin += 15
+        #    widthMax -= 15
         randomWidth = random.randint(widthMin, widthMax)
         randomHeight = random.randint(heightMin, heightMax)
 

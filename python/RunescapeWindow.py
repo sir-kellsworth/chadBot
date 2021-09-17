@@ -6,6 +6,7 @@ import subprocess
 import numpy as np
 import cv2
 from PIL import ImageGrab
+import random
 
 from Mouse.HumanMouse import HumanMouse
 from Keyboard import Keyboard
@@ -31,40 +32,50 @@ class RunescapeWindow:
     # description
     #   selects a world (326)
     def worldPick(self):
-        size = self.sizeGet()
-        worldPickButton = (87, 500)
-        worldPickButtonScaled = (0.10622710622710622, 0.7396449704142012)#(worldPickButton[0] / size[0], worldPickButton[1] / size[1])
-        print("**********")
-        print("world pick button scaled: " + str(worldPickButtonScaled))
-        print("**********")
-        world326Button = (235, 80)
-        world326ButtonScaled = (0.2869352869352869, 0.11834319526627218)#(world326Button[0] / size[0], world326Button[1] / size[1])
-        print("**********")
-        print("world pick button scaled: " + str(world326ButtonScaled))
-        print("**********")
+        screen = self.screenGet()
+        gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+        #reduces the color range to highlight button areas
+        _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
+        buttons = self.buttonsFind(thrash, 3000, 5000)
 
-        self.click(worldPickButtonScaled, 'left')
+        worldButton = None
+        leftmost = 10000
+        for button in buttons:
+            if button['center'][0] < leftmost:
+                worldButton = button
+                leftmost = button['center'][0]
+        self.absoluteClick(worldButton['center'], 'left')
         time.sleep(1)
-        self.click(world326ButtonScaled, 'left')
+
+        #next find only the free (white) worlds
+        screen = self.screenGet()
+        freeMask = cv2.inRange(screen, np.array((150, 150, 150)), np.array((220, 220, 220)))
+        freeWorlds = cv2.bitwise_not(freeMask)
+        freeWorldButtons = self.buttonsFind(freeWorlds, 50, 60)
+
+        choice = freeWorldButtons[0]#random.choice(freeWorldButtons)
+        self.absoluteClick(choice['center'], 'left')
         time.sleep(1)
 
     #**************************************************************************
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
-        size = self.sizeGet()
-        existingUserButton = (494, 310)
-        existingUserScaled = (existingUserButton[0] / size[0], existingUserButton[1] / size[1])
-        print("**********")
-        print("existing user scaled: " + str(existingUserScaled))
-        print("**********")
-        inventoryButton = (700, 592)
-        inventoryButtonScaled = (inventoryButton[0] / size[0], inventoryButton[1] / size[1])
-        print("**********")
-        print("inventory button scaled: " + str(inventoryButtonScaled))
-        print("**********")
+        screen = self.screenGet()
+        gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+        #reduces the color range to highlight button areas
+        _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
+        buttons = self.buttonsFind(thrash, 3000, 5000)
 
-        self.click(existingUserScaled, 'left')
+        existingUserButton = None
+        rightmost = 0
+        for button in buttons:
+            print(button['center'][0])
+            if button['center'][0] > rightmost:
+                existingUserButton = button
+                rightmost = button['center'][0]
+
+        self.absoluteClick(existingUserButton['center'], 'left')
         time.sleep(1)
         self.keyboard.type(username)
         time.sleep(0.5)
@@ -73,14 +84,36 @@ class RunescapeWindow:
         self.keyboard.type(password)
         time.sleep(0.8)
         self.keyboard.enter()
-        time.sleep(15)
+        time.sleep(10)
         #there is another 'play button' after in pretty much the same location
-        self.click(existingUserScaled, 'left')
-        time.sleep(2)
+        playButton = (existingUserButton['center'][0], existingUserButton['center'][1] + 20)
+        self.absoluteClick(playButton, 'left')
+        time.sleep(1)
 
         #also need to open the inventory
-        self.click(inventoryButtonScaled, 'left')
+        tabs = self.tabsGet()
+        print(len(tabs))
+        button = tabs[10]['center']
+        button = (button[0] + 596, button[1] + 585)
+        self.absoluteClick(button, 'left')
         time.sleep(1)
+
+    #**************************************************************************
+    # description
+    #   finds all of the buttons on the screen
+    def buttonsFind(self, screen, buttonLower, buttonLarger):
+        contours, _ = cv2.findContours(screen, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        buttons = []
+        for next in contours:
+            area = cv2.contourArea(next)
+            #this is to filter out some of the random boxes found
+            if area > buttonLower and area < buttonLarger:
+                x, y, w, h = cv2.boundingRect(next)
+                centerX = x + (w // 2)
+                centerY = y + (h // 2)
+                buttons.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
+
+        return buttons
 
     #**************************************************************************
     # description
@@ -140,6 +173,15 @@ class RunescapeWindow:
 
     #**************************************************************************
     # description
+    #   returns the entire runescape window
+    def screenGet(self):
+        corner = self.cornerGet()
+        size = self.sizeGet()
+        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    #**************************************************************************
+    # description
     #   returns only the play area. No inventory or chat screen
     def playAreaGet(self):
         corner = self.cornerGet()
@@ -158,6 +200,18 @@ class RunescapeWindow:
         img = img[330:-85, 621:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    def tabsGet(self):
+        corner = self.cornerGet()
+        size = self.sizeGet()
+        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = img[596:-5, 585:-2]
+        window = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        gray = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
+        #reduces the color range to highlight button areas
+        _, thrash = cv2.threshold(gray, 30, 230, cv2.THRESH_BINARY_INV)
+        buttons = self.buttonsFind(thrash, 400, 3000)
+        return buttons
+
     #**************************************************************************
     # description
     #   utilizes the HumanMouse to click somewhere on the screen. Assumes relative coordinates
@@ -171,8 +225,7 @@ class RunescapeWindow:
     def absoluteClick(self, location, button):
         corner = self.cornerGet()
         #offset is needed, otherwise it clicks on the corner of the object
-        offset = 20
-        location = (int(location[0] + corner[0] + offset), int(location[1] + corner[1] + offset))
+        location = (int(location[0] + corner[0]), int(location[1] + corner[1]))
         self.mouse.click(location, button)
 
     #**************************************************************************
