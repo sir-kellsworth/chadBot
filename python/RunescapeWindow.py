@@ -27,6 +27,7 @@ class RunescapeWindow:
 
         self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
         self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
+        time.sleep(1)
 
     #**************************************************************************
     # description
