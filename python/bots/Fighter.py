@@ -23,16 +23,18 @@ class Fighter(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
-        self.target = 'cow'#profile.targetGet()
+        self.target = 'cow1'#profile.targetGet()
         super().__init__(profile, window)
         self.targetColorRanges = {
-            'cow':    ([52, 58, 70], [60, 66, 78]),
-            'bankWindow': ([99, 112, 122], [111, 150, 140]),
-            'stairs': ([2, 46, 76], [6, 50, 80]),
-            'healthBar': ([0, 255, 0], [0, 255, 0])
+            'cow1':         ([37, 53, 70], [60, 66, 78]),
+            'cow2':         ([80, 94, 111], [105, 115, 141]),
+            'bankWindow':   ([99, 112, 122], [111, 150, 140]),
+            'stairs':       ([2, 46, 76], [6, 50, 80]),
+            'healthBar':    ([0, 255, 0], [0, 255, 0])
         }
         self.targetAreas = {
-            'cow': 100,
+            'cow1': 80,
+            'cow2': 70,
             'bankWindow': 10,
             'healthBar': 10
         }
@@ -63,7 +65,7 @@ class Fighter(Bot):
             target = self.search(self.target, areaThreshold=self.targetAreas[self.target])
             self.targetDisplay(target)
             center = target['center']
-            center = (center[0] + 10, center[1] + 15)
+            center = (center[0] + 30, center[1] + 30)
             self.window.absoluteClick(center, 'left')
             time.sleep(5)
             self.fightWait()
@@ -89,7 +91,7 @@ class Fighter(Bot):
             if targetArea['center'][0] - newTarget['center'][0] < 1:
                 frames += 1
 
-            if frames == 3:
+            if frames == 7:
                 moving = False
             else:
                 time.sleep(0.03)
