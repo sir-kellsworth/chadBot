@@ -60,10 +60,11 @@ class Fighter(Bot):
         returnState = None
 
         if self.healthGet() > 3:
-            print("searching")
             target = self.search(self.target, areaThreshold=self.targetAreas[self.target])
             self.targetDisplay(target)
-            self.window.straightClick(self.randomPointSelect(target), 'left')
+            center = target['center']
+            center = (center[0] + 10, center[1] + 15)
+            self.window.absoluteClick(center, 'left')
             time.sleep(5)
             self.fightWait()
 
@@ -72,6 +73,28 @@ class Fighter(Bot):
             returnState = STATE_HEAL
 
         return returnState
+
+    def search(self, target, areaThreshold):
+        moving = True
+        frames = 0
+        targetArea = super().search(target, areaThreshold)
+        time.sleep(0.03)
+
+        while moving:
+            newTarget = self.targetFindClosest(target, self.window.playAreaGet(), areaThreshold)
+            if newTarget == None:
+                targetArea = super().search(target, areaThreshold)
+                continue
+
+            if targetArea['center'][0] - newTarget['center'][0] < 1:
+                frames += 1
+
+            if frames == 3:
+                moving = False
+            else:
+                time.sleep(0.03)
+
+        return targetArea
 
     def healthGet(self):
         return 10
@@ -90,8 +113,7 @@ class Fighter(Bot):
         while fighting:
             playArea = self.window.playAreaGet()
             healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
-            print("health bars found: " + str(len(healthBars)))
-            if len(healthBars) <= 1:
+            if len(healthBars) <= 0.1:
                 fighting = False
                 return
 
