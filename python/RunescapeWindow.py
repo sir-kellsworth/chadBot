@@ -71,7 +71,6 @@ class RunescapeWindow:
         existingUserButton = None
         rightmost = 0
         for button in buttons:
-            print(button['center'][0])
             if button['center'][0] > rightmost:
                 existingUserButton = button
                 rightmost = button['center'][0]
@@ -85,19 +84,24 @@ class RunescapeWindow:
         self.keyboard.type(password)
         time.sleep(0.8)
         self.keyboard.enter()
-        time.sleep(10)
+        time.sleep(17)
         #there is another 'play button' after in pretty much the same location
         playButton = (existingUserButton['center'][0], existingUserButton['center'][1] + 20)
         self.absoluteClick(playButton, 'left')
         time.sleep(1)
 
         #also need to open the inventory
-        tabs = self.tabsGet()
-        print(len(tabs))
+        tabs = []
+        while len(tabs) == 0:
+            tabs = self.tabsGet()
+            time.sleep(1)
         button = tabs[10]['center']
         button = (button[0] + 596, button[1] + 585)
         self.absoluteClick(button, 'left')
         time.sleep(1)
+
+        #force screen to be topdown view
+        self.topViewSet()
 
     #**************************************************************************
     # description
@@ -143,7 +147,6 @@ class RunescapeWindow:
                     corner = (win.get_geometry().x, win.get_geometry().y)
                     #might help find it. Random windows are < 0
                     size = (win.get_geometry().width, win.get_geometry().height)
-                    print(winName)
                     if corner[0] > 10 and corner[1] > 10:
                         window = win
                         return window
@@ -254,10 +257,10 @@ class RunescapeWindow:
     #   button
     #       type        - string
     #       description - 'left', 'right', 'middle' buttons to click after moving
-    def straightClick(self, location, button):
+    def straightClick(self, location, button, duration = 0.2):
         corner = self.cornerGet()
         size = self.sizeGet()
         #offset is needed, otherwise it clicks on the corner of the object
         offset = 20
         location = (location[0] + corner[0] + offset, location[1] + corner[1] + offset)
-        self.mouse.straightClick(location, button)
+        self.mouse.straightClick(location, button, duration)
