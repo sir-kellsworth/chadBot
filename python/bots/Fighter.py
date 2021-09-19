@@ -3,6 +3,7 @@ from bots.Bot import *
 import cv2
 import numpy as np
 import math
+import threading
 
 STATE_FIGHTING = 0
 STATE_HEAL = 1
@@ -41,6 +42,17 @@ class Fighter(Bot):
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_FIGHTING
 
+        self.backgroundSubtractor = cv2.createBackgroundSubtractorMOG2()
+        self.backgroundThread = threading.Thread(target=self.backgroundAccumulate)
+        self.backgroundThread.start()
+
+    #**************************************************************************
+    # description
+    #   destructor
+    def __del__(self):
+        self.running = False
+        self.backgroundThread.join()
+
     #**************************************************************************
     # description
     #   preforms the next step in the state machine
@@ -76,27 +88,36 @@ class Fighter(Bot):
 
         return returnState
 
+    #**************************************************************************
+    # description
+    #   searching playarea for animated target. Basically, it subtracts the background
+    # parameters
+    #   target
+    #       type        - string
+    #       description - name of the 'self.mine' type to search for
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    # returns
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     def search(self, target, areaThreshold):
         moving = True
         frames = 0
-        targetArea = super().search(target, areaThreshold)
-        time.sleep(0.03)
-
-        while moving:
-            newTarget = self.targetFindClosest(target, self.window.playAreaGet(), areaThreshold)
-            if newTarget == None:
-                targetArea = super().search(target, areaThreshold)
-                continue
-
-            if targetArea['center'][0] - newTarget['center'][0] < 1:
-                frames += 1
-
-            if frames == 7:
-                moving = False
-            else:
-                time.sleep(0.03)
+        targetArea = None
+        while targetArea == None:
+            nonBackground = self.currentFrame.clone()
+            targetArea = self.targetFindClosest(target, self.window.playAreaGet(), areaThreshold)
+            time.sleep(0.5)
 
         return targetArea
+
+    def backgroundAccumulate(self):
+        while self.running:
+            self.currentFrame = self.backgroundSubtractor.apply(self.window.playAreaGet())
+            if self.debug:
+                cv2.imshow('background', self.currentFrame)
+                cv.waitKey(30)
+            time.sleep(1 / 30)
 
     def healthGet(self):
         return 10
