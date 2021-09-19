@@ -33,7 +33,7 @@ class HumanMouse:
     #**************************************************************************
     def straightClick(self, toPos, button, duration):
         pyautogui.moveTo(toPos, duration=duration)
-        pyautogui.click(button=button, duration=duration)
+        pyautogui.click(button=button)
 
     #**************************************************************************
     def doubleClick(self, toPos, button):

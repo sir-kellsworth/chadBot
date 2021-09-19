@@ -261,6 +261,6 @@ class RunescapeWindow:
         corner = self.cornerGet()
         size = self.sizeGet()
         #offset is needed, otherwise it clicks on the corner of the object
-        offset = 20
-        location = (location[0] + corner[0] + offset, location[1] + corner[1] + offset)
+        #offset = 20
+        location = (location[0] + corner[0], location[1] + corner[1])
         self.mouse.straightClick(location, button, duration)
