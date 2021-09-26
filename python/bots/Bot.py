@@ -132,8 +132,9 @@ class Bot:
     #   description - dictionary of 'center', 'area' and 'size' of closest mine
     def targetFindAll(self, mineType, playArea, areaThreshold):
         mask = cv2.inRange(playArea, np.array(self.targetColorRanges[mineType][0]), np.array(self.targetColorRanges[mineType][1]))
-        cv2.imshow('mask', mask)
-        cv2.waitKey(10)
+        if self.debug:
+            cv2.imshow('mask', mask)
+            cv2.waitKey(10)
         kernel = np.ones((10, 10), np.uint8)
         closing = cv2.morphologyEx(mask.copy(), cv2.MORPH_CLOSE, kernel)
 

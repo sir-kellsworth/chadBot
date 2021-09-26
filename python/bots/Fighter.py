@@ -1,4 +1,5 @@
 from bots.Bot import *
+from bots.BackgroundSubtractor import BackgroundSubtractor
 
 import cv2
 import numpy as np
@@ -24,37 +25,28 @@ class Fighter(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
-        self.target = 'cow1'#profile.targetGet()
+        self.target = 'cow'#profile.targetGet()
         super().__init__(profile, window)
         self.targetColorRanges = {
-            'cow1':         ([250, 250, 250], [255, 255, 255]),#([37, 53, 70], [60, 66, 78]),
-            'cow2':         ([80, 94, 111], [105, 115, 141]),
             'bankWindow':   ([99, 112, 122], [111, 150, 140]),
             'stairs':       ([2, 46, 76], [6, 50, 80]),
             'healthBar':    ([0, 255, 0], [0, 255, 0])
         }
         self.targetAreas = {
-            'cow1': 500,
-            'cow2': 70,
+            'cow': 300,
             'bankWindow': 10,
             'healthBar': 10
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_FIGHTING
 
-        self.currentFrame = None
-        self.running = True
-        self.backgroundSubtractor = cv2.createBackgroundSubtractorMOG2()
-        self.backgroundThread = threading.Thread(target=self.backgroundAccumulate)
-        self.backgroundThread.start()
-        time.sleep(1)
+        self.subtractor = BackgroundSubtractor(self.window, debug)
 
     #**************************************************************************
     # description
     #   destructor
     def __del__(self):
         self.running = False
-        self.backgroundThread.join()
 
     #**************************************************************************
     # description
@@ -82,9 +74,9 @@ class Fighter(Bot):
             center = target['center']
             center = (center[0] + 30, center[1] + 30)
             self.window.straightClick(center, 'left', duration=0)
-            time.sleep(5)
             #should make background image while fighting. targets should be obvious after this
-            self.backgroundSubtractor = cv2.createBackgroundSubtractorMOG2()
+            self.subtractor.reset()
+            time.sleep(5)
             self.fightWait()
 
             returnState = STATE_FIGHTING
@@ -110,7 +102,7 @@ class Fighter(Bot):
         frames = 0
         targetArea = None
         while targetArea == None:
-            nonBackground = np.copy(self.currentFrame)
+            nonBackground = self.subtractor.nextGet()
             targetArea = self.targetFindClosestBackground(target, nonBackground, areaThreshold)
             time.sleep(0.5)
 
@@ -170,14 +162,6 @@ class Fighter(Bot):
                 mineAreas.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
 
         return mineAreas
-
-    def backgroundAccumulate(self):
-        while self.running:
-            self.currentFrame = self.backgroundSubtractor.apply(self.window.playAreaGet())
-            if self.debug:
-                cv2.imshow('background', self.currentFrame)
-                cv2.waitKey(30)
-            time.sleep(1 / 30)
 
     def healthGet(self):
         return 10
