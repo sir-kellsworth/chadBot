@@ -62,9 +62,10 @@ class Bot:
         contours, _ = cv2.findContours(inventoryArea.copy(), 1, 2)
         mineAreas = []
         for next in contours:
-            #good for debuging. Draws rectagles over the mines
             x, y, w, h = cv2.boundingRect(next)
-            cv2.rectangle(inventoryArea, (x, y), (x+w, y+h), (255, 255, 255), -1)
+            #good for debuging. Draws rectagles over the mines
+            if self.debug:
+                cv2.rectangle(inventoryArea, (x, y), (x+w, y+h), (255, 255, 255), -1)
 
             #gets number of mines found
             area = cv2.contourArea(next)
@@ -143,9 +144,9 @@ class Bot:
         contours, _ = cv2.findContours(closing.copy(), 1, 2)
         mineAreas = []
         for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
-                x, y, w, h = cv2.boundingRect(next)
                 cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
                 cv2.imshow('mask', closing)
 

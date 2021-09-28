@@ -33,7 +33,7 @@ class Fighter(Bot):
             'healthBar':    ([0, 255, 0], [0, 255, 0])
         }
         self.targetAreas = {
-            'cow': 300,
+            'cow': 350,
             'bankWindow': 10,
             'healthBar': 10
         }
@@ -159,9 +159,9 @@ class Fighter(Bot):
         contours, _ = cv2.findContours(nonBackground.copy(), 1, 2)
         mineAreas = []
         for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
-                x, y, w, h = cv2.boundingRect(next)
                 cv2.rectangle(nonBackground, (x, y), (x+w, y+h), (255, 255, 255), -1)
                 cv2.imshow('mask', nonBackground)
 
