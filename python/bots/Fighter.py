@@ -76,6 +76,7 @@ class Fighter(Bot):
             self.window.straightClick(center, 'left', duration=0)
             #should make background image while fighting. targets should be obvious after this
             self.subtractor.reset()
+            #waits a little to make sure we are attacking
             time.sleep(5)
             self.fightWait()
 
@@ -98,8 +99,6 @@ class Fighter(Bot):
     # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     def search(self, target, areaThreshold):
-        moving = True
-        frames = 0
         searching = True
         while searching:
             nonBackground = self.subtractor.nextGet()

@@ -16,7 +16,7 @@ STATE_BANK_RUN = 1
 STATE_BANK_DEPOSIT = 2
 STATE_MINE_RUN = 3
 
-configFile = os.getcwd() + "/config/miner.config"
+configFile = os.getcwd() + "/config/fighter.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 

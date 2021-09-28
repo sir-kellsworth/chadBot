@@ -57,7 +57,7 @@ class Bot:
         inventoryArea = cv2.bitwise_not(emptyMask)
         if self.debug:
             cv2.imshow('inventory', inventoryArea)
-            cv2.waitKey(30)
+            cv2.waitKey(1)
 
         contours, _ = cv2.findContours(inventoryArea.copy(), 1, 2)
         mineAreas = []
@@ -93,7 +93,7 @@ class Bot:
             boundingBox = (center[0] - halfWidth, center[1] - halfHeight, center[0] + halfWidth, center[1] + halfHeight)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
-            cv2.waitKey(60)
+            cv2.waitKey(1)
 
     #**************************************************************************
     # description
@@ -136,16 +136,16 @@ class Bot:
         mask = cv2.inRange(playArea, np.array(self.targetColorRanges[mineType][0]), np.array(self.targetColorRanges[mineType][1]))
         if self.debug:
             cv2.imshow('mask', mask)
-            cv2.waitKey(10)
+            cv2.waitKey(1)
         kernel = np.ones((10, 10), np.uint8)
         closing = cv2.morphologyEx(mask.copy(), cv2.MORPH_CLOSE, kernel)
 
         contours, _ = cv2.findContours(closing.copy(), 1, 2)
         mineAreas = []
         for next in contours:
-            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
+                x, y, w, h = cv2.boundingRect(next)
                 cv2.rectangle(closing, (x, y), (x+w, y+h), (255, 255, 255), -1)
                 cv2.imshow('mask', closing)
 
@@ -235,14 +235,8 @@ class Bot:
         #all of this is to avoid accidentally clicking outside the object bounds
         widthMin = center[0] + (size[0] // 2)
         widthMax = center[0] + (size[0] // 2)
-        #if widthMin + 15 > widthMax - 15:
-        #    widthMin += 15
-        #    widthMax -= 15
         heightMin = center[1] + (size[1] // 2)
         heightMax = center[1] + (size[1] // 2)
-        #if heightMin + 15 > heightMax - 15:
-        #    widthMin += 15
-        #    widthMax -= 15
         randomWidth = random.randint(widthMin, widthMax)
         randomHeight = random.randint(heightMin, heightMax)
 
