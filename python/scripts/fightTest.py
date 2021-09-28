@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import os
 sys.path.append(os.path.join(sys.path[0], '../'))
 print(sys.path)
 
-from bots.Miner import Miner
+from bots.Fighter import Fighter
 import Profile
 import RunescapeWindow
 import signal
@@ -16,11 +16,11 @@ STATE_BANK_RUN = 1
 STATE_BANK_DEPOSIT = 2
 STATE_MINE_RUN = 3
 
-configFile = os.getcwd() + "/config/miner.config"
+configFile = os.getcwd() + "/config/fighter.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 
-bot = Miner(profile, window, debug=True)
+bot = Fighter(profile, window, debug=False)
 
 while True:
     bot.step()
