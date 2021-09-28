@@ -25,7 +25,7 @@ class Fighter(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
-        self.target = 'cow'#profile.targetGet()
+        self.target = profile.targetGet()
         super().__init__(profile, window)
         self.targetColorRanges = {
             'bankWindow':   ([99, 112, 122], [111, 150, 140]),
@@ -100,22 +100,22 @@ class Fighter(Bot):
     def search(self, target, areaThreshold):
         moving = True
         frames = 0
-        targetArea = None
-        while targetArea == None:
+        searching = True
+        while searching:
             nonBackground = self.subtractor.nextGet()
-            targetArea = self.targetFindClosestBackground(target, nonBackground, areaThreshold)
-            time.sleep(0.5)
+            targetArea = self.targetFindClosestBackground(nonBackground, areaThreshold)
+            if targetArea == None:
+                time.sleep(0.5)
+            else:
+                searching = False
 
         return targetArea
 
     #**************************************************************************
     # description
-    #   searches for the targeted mine. Returns location closest to the player
+    #   searches the background for moving targets closest to the player
     # parameters
-    #   mineType
-    #       type        - string
-    #       description - name of the 'self.mine' type to search for
-    #   playArea
+    #   nonBackground
     #       type        - np.array
     #       description - area of the window to search
     #   areaThreshold
@@ -124,13 +124,13 @@ class Fighter(Bot):
     # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
     #   description - dictionary of 'center', 'area' and 'size'
-    def targetFindClosestBackground(self, mineType, playArea, areaThreshold):
-        mines = self.targetFindAllBackground(mineType, playArea, areaThreshold)
+    def targetFindClosestBackground(self, nonBackground, areaThreshold):
+        mines = self.targetFindAllBackground(nonBackground, areaThreshold)
 
         if len(mines) > 0:
             closest = 10000
             target = ()
-            playAreaShape = self.window.playAreaGet().shape
+            playAreaShape = nonBackground.shape
             playerX = (playAreaShape[0] / 2) + 50
             playerY = (playAreaShape[1] / 2) + 50
             for next in mines:
@@ -143,15 +143,28 @@ class Fighter(Bot):
         else:
             return None
 
-    def targetFindAllBackground(self, target, playArea, areaThreshold):
-        contours, _ = cv2.findContours(playArea.copy(), 1, 2)
+    #**************************************************************************
+    # description
+    #   searches the background for all moving targets
+    # parameters
+    #   nonBackground
+    #       type        - np.array
+    #       description - area of the window to search
+    #   areaThreshold
+    #       type        - int
+    #       description - minimum area of contour to look for
+    # returns
+    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
+    #   description - list of dictionary of 'center', 'area' and 'size'
+    def targetFindAllBackground(self, nonBackground, areaThreshold):
+        contours, _ = cv2.findContours(nonBackground.copy(), 1, 2)
         mineAreas = []
         for next in contours:
-            x, y, w, h = cv2.boundingRect(next)
             #good for debuging. Draws rectagles over the mines
             if self.debug:
-                cv2.rectangle(playArea, (x, y), (x+w, y+h), (255, 255, 255), -1)
-                cv2.imshow('mask', playArea)
+                x, y, w, h = cv2.boundingRect(next)
+                cv2.rectangle(nonBackground, (x, y), (x+w, y+h), (255, 255, 255), -1)
+                cv2.imshow('mask', nonBackground)
 
             #gets number of mines found
             area = cv2.contourArea(next)
@@ -163,17 +176,19 @@ class Fighter(Bot):
 
         return mineAreas
 
+    #**************************************************************************
+    # description
+    #   returns an integer value of the players remaining health
+    # returns
+    #   type        - int
+    #   description - value of player health
     def healthGet(self):
         return 10
 
     #**************************************************************************
     # description
-    #   waits for the mine to respond, then checks to make sure its there again.
-    #   if the mining process takes longer than 15 seconds, then it just returns
-    # parameters
-    #   respondTime
-    #       type        - int
-    #       description - how long to wait before returning
+    #   waits for the bot to beat the enemy. This is not a smart function.
+    #   It waits for the health bars to disapear.
     def fightWait(self):
         fighting = True
 

@@ -36,6 +36,8 @@ class Bot:
             self.paths[pathName].replay()
 
     #**************************************************************************
+    # description
+    #   preforms the next step in the state machine
     def step(self):
         print("step function hasnt been implemented")
 
