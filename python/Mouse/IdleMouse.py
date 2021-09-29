@@ -20,6 +20,13 @@ ACTION_NOTHING = 3
 
 class IdleMouse:
     #**************************************************************************
+    # description
+    #   constructor
+    # parameters
+    #   window
+    #       type        - RunescapeWindow
+    #       description - reference to the runescape window to gather info like
+    #                       screen size
     def __init__(self, window):
         self.window = window
         self.running = True
@@ -33,21 +40,33 @@ class IdleMouse:
         self.backgroundThread.start()
 
     #**************************************************************************
+    # description
+    #   destructor
     def __del__(self):
         self.backgroundQueue.put(STATE_IDLE_KILL)
         self.backgroundThread.join()
         self.stateThread.join()
 
     #**************************************************************************
+    # description
+    #   starts the idle mouse background animation
     def idleStart(self):
         self.backgroundQueue.put(STATE_IDLE_START)
 
     #**************************************************************************
+    # description
+    #   stops the idle mouse background animation. Blocks until its done
     def idleStop(self):
         self.backgroundQueue.put(STATE_IDLE_STOP)
         self.stopingSemaphore.acquire()
 
     #**************************************************************************
+    # description
+    #   Moves the mouse to a position using a bezel curve
+    # parameters
+    #   toPosition
+    #       type        - (x, y) coordinates
+    #       description - coordinates on the screen. Local to the window
     def moveTo(self, toPos):
         fromPos = pyautogui.position()
         curve = HumanCurve(fromPos, toPos)
@@ -55,6 +74,13 @@ class IdleMouse:
             pyautogui.moveTo(point)
 
     #**************************************************************************
+    # description
+    #   makes little circles on the screen around a point
+    # parameters
+    #   centerPoint
+    #       type        - (x, y) coordinates
+    #       description - coordinates of the center of a circle to make with the
+    #                       mouse. Coordinates are local to the window
     def circleMake(self, centerPoint):
         radius = 100
         numPoints = 120
@@ -66,6 +92,11 @@ class IdleMouse:
             point = (int(centerPoint[0] + point[0]), int(centerPoint[1] + point[1]))
             pyautogui.moveTo(point)
 
+    #**************************************************************************
+    # description
+    #   called by the backgroundThread. Randomly picks an idle function and
+    #   preforms it.If the state changes, then it waits on a mutex until the
+    #   state changes back to idling
     def mouseMove(self):
         while self.running:
             if self.idling:
@@ -103,6 +134,8 @@ class IdleMouse:
                 self.idlingSemaphore.acquire()
 
     #**************************************************************************
+    # description
+    #   called by the stateThread. It handles changing states for the backgroundThread.
     def stateHandle(self):
         while self.running:
             nextState = self.backgroundQueue.get()
