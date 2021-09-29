@@ -57,7 +57,7 @@ class Fighter(Bot):
     #   preforms the next step in the state machine
     def step(self):
         if self.state == STATE_FIGHT_START:
-            self.state = self.fight()
+            self.state = self.fightStart()
         elif self.state == STATE_TARGET_TRACK:
             self.state = self.targetTrack()
         elif self.state == STATE_FIGHT_FINISH:
@@ -69,11 +69,12 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
-    #   checks to see if the inventory is full. If not, it searches for tin and mines it
+    #   searches for a new target. When one is found, it clicks on it and moves to
+    #   the next state
     # returns
     #   type        - int
     #   description - the next state
-    def fight(self):
+    def fightStart(self):
         returnState = None
 
         if self.healthGet() > 3:
@@ -82,8 +83,6 @@ class Fighter(Bot):
             center = target['center']
             center = (center[0] + 30, center[1] + 30)
             self.window.straightClick(center, 'left', duration=0)
-            #should make background image while fighting. targets should be obvious after this
-            self.subtractor.reset()
 
             returnState = STATE_TARGET_TRACK
         else:
@@ -191,8 +190,15 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
-    #   waits for the fighting to start. Eventually needs to be smarter
+    #   waits for the fighting to start. Eventually needs to wait for the background
+    #   to settle, or for some timeout before moving on
+    # returns
+    #   type        - int
+    #   description - the next state
     def targetTrack(self):
+        #should make background image while fighting. targets should be obvious after this
+        #also should make it clear when the bot stops moving. The background will reset pretty quickly
+        self.subtractor.reset()
         #waits a little to make sure we are attacking
         time.sleep(5)
 
@@ -202,6 +208,9 @@ class Fighter(Bot):
     # description
     #   waits for the bot to beat the enemy. This is not a smart function.
     #   It waits for the health bars to disapear.
+    # returns
+    #   type        - int
+    #   description - the next state
     def fightFinish(self):
         fighting = True
 
