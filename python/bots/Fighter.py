@@ -1,5 +1,6 @@
 from bots.Bot import *
 from bots.BackgroundSubtractor import BackgroundSubtractor
+from Mouse.IdleMouse import IdleMouse
 
 import cv2
 import numpy as np
@@ -7,7 +8,9 @@ import math
 import threading
 
 STATE_FIGHTING = 0
-STATE_HEAL = 1
+STATE_TARGET_TRACK = 1
+STATE_FIGHT_FINISH = 2
+STATE_HEAL = 3
 
 class Fighter(Bot):
     #**************************************************************************
@@ -41,6 +44,7 @@ class Fighter(Bot):
         self.state = STATE_FIGHTING
 
         self.subtractor = BackgroundSubtractor(self.window, debug)
+        self.idleMouse = IdleMouse(self.window)
 
     #**************************************************************************
     # description
@@ -52,8 +56,12 @@ class Fighter(Bot):
     # description
     #   preforms the next step in the state machine
     def step(self):
-        if self.state == STATE_FIGHTING:
+        if self.state == STATE_FIGHT_START:
             self.state = self.fight()
+        elif self.state == STATE_TARGET_TRACK:
+            self.state = self.targetTrack()
+        elif self.state == STATE_FIGHT_FINISH:
+            self.state = self.fightFinish()
         elif self.state == STATE_HEAL:
             self.state = self.heal()
         else:
@@ -76,11 +84,8 @@ class Fighter(Bot):
             self.window.straightClick(center, 'left', duration=0)
             #should make background image while fighting. targets should be obvious after this
             self.subtractor.reset()
-            #waits a little to make sure we are attacking
-            time.sleep(5)
-            self.fightWait()
 
-            returnState = STATE_FIGHTING
+            returnState = STATE_TARGET_TRACK
         else:
             returnState = STATE_HEAL
 
@@ -186,16 +191,30 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
+    #   waits for the fighting to start. Eventually needs to be smarter
+    def targetTrack(self):
+        #waits a little to make sure we are attacking
+        time.sleep(5)
+
+        return STATE_FIGHT_FINISH
+
+    #**************************************************************************
+    # description
     #   waits for the bot to beat the enemy. This is not a smart function.
     #   It waits for the health bars to disapear.
-    def fightWait(self):
+    def fightFinish(self):
         fighting = True
 
+        self.idleMouse.idleStart()
         while fighting:
             playArea = self.window.playAreaGet()
             healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
-            if len(healthBars) <= 0.1:
+            if len(healthBars) <= 1:
                 fighting = False
                 return
 
             time.sleep(0.5)
+
+        self.idleMouse.idleStop()
+
+        return STATE_FIGHTING
