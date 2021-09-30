@@ -7,7 +7,7 @@ import numpy as np
 import math
 import threading
 
-STATE_FIGHTING = 0
+STATE_FIGHT_START = 0
 STATE_TARGET_TRACK = 1
 STATE_FIGHT_FINISH = 2
 STATE_HEAL = 3
@@ -41,7 +41,7 @@ class Fighter(Bot):
             'healthBar': 10
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
-        self.state = STATE_FIGHTING
+        self.state = STATE_FIGHT_START
 
         self.subtractor = BackgroundSubtractor(self.window, debug)
         self.idleMouse = IdleMouse(self.window)
@@ -66,6 +66,8 @@ class Fighter(Bot):
             self.state = self.heal()
         else:
             print("invalid state: " + str(self.state))
+
+        time.sleep(0.3)
 
     #**************************************************************************
     # description
@@ -202,7 +204,12 @@ class Fighter(Bot):
         #waits a little to make sure we are attacking
         time.sleep(5)
 
-        return STATE_FIGHT_FINISH
+        playArea = self.window.playAreaGet()
+        healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
+        if len(healthBars) >= 1:
+            return STATE_FIGHT_FINISH
+        else:
+            return STATE_FIGHT_START
 
     #**************************************************************************
     # description
@@ -218,12 +225,12 @@ class Fighter(Bot):
         while fighting:
             playArea = self.window.playAreaGet()
             healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
-            if len(healthBars) <= 1:
+            if len(healthBars) < 1:
                 fighting = False
-                return
+                break
 
             time.sleep(0.5)
 
         self.idleMouse.idleStop()
 
-        return STATE_FIGHTING
+        return STATE_FIGHT_START

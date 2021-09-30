@@ -29,36 +29,28 @@ class IdleMouse:
     #                       screen size
     def __init__(self, window):
         self.window = window
-        self.running = True
-        self.idling = False
-        self.backgroundQueue = queue.Queue()
-        self.idlingSemaphore = threading.Semaphore()
-        self.stopingSemaphore = threading.Semaphore()
-        self.stateThread = threading.Thread(target=self.stateHandle)
-        self.stateThread.start()
-        self.backgroundThread = threading.Thread(target=self.mouseMove)
-        self.backgroundThread.start()
 
     #**************************************************************************
     # description
     #   destructor
     def __del__(self):
-        self.backgroundQueue.put(STATE_IDLE_KILL)
+        self.running = False
         self.backgroundThread.join()
-        self.stateThread.join()
 
     #**************************************************************************
     # description
     #   starts the idle mouse background animation
     def idleStart(self):
-        self.backgroundQueue.put(STATE_IDLE_START)
+        self.running = True
+        self.backgroundThread = threading.Thread(target=self.mouseMove)
+        self.backgroundThread.start()
 
     #**************************************************************************
     # description
     #   stops the idle mouse background animation. Blocks until its done
     def idleStop(self):
-        self.backgroundQueue.put(STATE_IDLE_STOP)
-        self.stopingSemaphore.acquire()
+        self.running = False
+        self.backgroundThread.join()
 
     #**************************************************************************
     # description
@@ -71,6 +63,8 @@ class IdleMouse:
         fromPos = pyautogui.position()
         curve = HumanCurve(fromPos, toPos)
         for point in curve.points:
+            if not self.running:
+                break
             pyautogui.moveTo(point)
 
     #**************************************************************************
@@ -89,6 +83,8 @@ class IdleMouse:
         point = (int(centerPoint[0] + curve[0][0]), int(centerPoint[1] + curve[0][1]))
         pyautogui.moveTo(point, duration=0.02)
         for point in curve[1:]:
+            if not self.running:
+                break
             point = (int(centerPoint[0] + point[0]), int(centerPoint[1] + point[1]))
             pyautogui.moveTo(point)
 
@@ -99,53 +95,32 @@ class IdleMouse:
     #   state changes back to idling
     def mouseMove(self):
         while self.running:
-            if self.idling:
-                moveType = random.randint(0, NUM_OPTIONS)
+            moveType = random.randint(0, NUM_OPTIONS)
+            corner = self.window.cornerGet()
+            size = self.window.sizeGet()
+            if moveType == ACTION_RANDOM_POINT:
+                randomPoint = (
+                    random.randint(0, size[0]) + corner[0],
+                    random.randint(0, size[1]) + corner[1]
+                )
+                self.moveTo(randomPoint)
+            elif moveType == ACTION_CENTER:
                 corner = self.window.cornerGet()
-                size = self.window.sizeGet()
-                if moveType == ACTION_RANDOM_POINT:
-                    randomPoint = (
-                        random.randint(0, size[0]) + corner[0],
-                        random.randint(0, size[1]) + corner[1]
-                    )
-                    self.moveTo(randomPoint)
-                elif moveType == ACTION_CENTER:
-                    corner = self.window.cornerGet()
-                    playAreaSize = self.window.playAreaGet().shape
-                    center = (
-                        (playAreaSize[0] // 2) + corner[0],
-                        (playAreaSize[1] // 2) + corner[1]
-                    )
-                    self.moveTo(center)
-                elif moveType == ACTION_CIRCLE:
-                    corner = self.window.cornerGet()
-                    playAreaSize = self.window.playAreaGet().shape
-                    center = (
-                        (playAreaSize[0] // 2) + corner[0],
-                        (playAreaSize[1] // 2) + corner[1]
-                    )
-                    self.circleMake(center)
-                elif moveType == ACTION_NOTHING:
-                    time.sleep(5)
+                playAreaSize = self.window.playAreaGet().shape
+                center = (
+                    (playAreaSize[0] // 2) + corner[0],
+                    (playAreaSize[1] // 2) + corner[1]
+                )
+                self.moveTo(center)
+            elif moveType == ACTION_CIRCLE:
+                corner = self.window.cornerGet()
+                playAreaSize = self.window.playAreaGet().shape
+                center = (
+                    (playAreaSize[0] // 2) + corner[0],
+                    (playAreaSize[1] // 2) + corner[1]
+                )
+                self.circleMake(center)
+            elif moveType == ACTION_NOTHING:
+                time.sleep(5)
 
-                time.sleep(0.3)
-            else:
-                self.stopingSemaphore.release()
-                self.idlingSemaphore.acquire()
-
-    #**************************************************************************
-    # description
-    #   called by the stateThread. It handles changing states for the backgroundThread.
-    def stateHandle(self):
-        while self.running:
-            nextState = self.backgroundQueue.get()
-
-            if nextState == STATE_IDLE_START:
-                self.idling = True
-                self.idlingSemaphore.release()
-            elif nextState == STATE_IDLE_STOP:
-                self.idling = False
-            elif nextState == STATE_IDLE_KILL:
-                self.running = False
-                self.idling = False
-                self.idlingSemaphore.release()
+            time.sleep(0.3)
