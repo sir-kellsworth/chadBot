@@ -41,6 +41,8 @@ class IdleMouse:
     # description
     #   starts the idle mouse background animation
     def idleStart(self):
+        self.corner = self.window.cornerGet()
+        self.size = self.window.sizeGet()
         self.running = True
         self.backgroundThread = threading.Thread(target=self.mouseMove)
         self.backgroundThread.start()
@@ -96,28 +98,24 @@ class IdleMouse:
     def mouseMove(self):
         while self.running:
             moveType = random.randint(0, NUM_OPTIONS)
-            corner = self.window.cornerGet()
-            size = self.window.sizeGet()
             if moveType == ACTION_RANDOM_POINT:
                 randomPoint = (
-                    random.randint(0, size[0]) + corner[0],
-                    random.randint(0, size[1]) + corner[1]
+                    random.randint(0, self.size[0]) + self.corner[0],
+                    random.randint(0, self.size[1]) + self.corner[1]
                 )
                 self.moveTo(randomPoint)
             elif moveType == ACTION_CENTER:
-                corner = self.window.cornerGet()
                 playAreaSize = self.window.playAreaGet().shape
                 center = (
-                    (playAreaSize[0] // 2) + corner[0],
-                    (playAreaSize[1] // 2) + corner[1]
+                    (playAreaSize[0] // 2) + self.corner[0],
+                    (playAreaSize[1] // 2) + self.corner[1]
                 )
                 self.moveTo(center)
             elif moveType == ACTION_CIRCLE:
-                corner = self.window.cornerGet()
                 playAreaSize = self.window.playAreaGet().shape
                 center = (
-                    (playAreaSize[0] // 2) + corner[0],
-                    (playAreaSize[1] // 2) + corner[1]
+                    (playAreaSize[0] // 2) + self.corner[0],
+                    (playAreaSize[1] // 2) + self.corner[1]
                 )
                 self.circleMake(center)
             elif moveType == ACTION_NOTHING:
