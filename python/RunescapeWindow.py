@@ -206,6 +206,9 @@ class RunescapeWindow:
         img = img[330:-85, 621:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    #**************************************************************************
+    # description
+    #   returns only the tabs in the corner. No play area, chat screen or inventory
     def tabsGet(self):
         corner = self.cornerGet()
         size = self.sizeGet()

@@ -192,6 +192,19 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
+    #   returns if the health bar is above the players head or not
+    # returns
+    #   type        - bool
+    #   description - True if health bar is detected
+    def isFighting(self):
+        playArea = self.window.playAreaGet()
+        playerHealth = playArea[healthTop:healthBottom, healthLeft:healthRight]
+        cv2.imshow('health area', playerHealth)
+        cv2.waitKey(30)
+
+
+    #**************************************************************************
+    # description
     #   waits for the fighting to start. Eventually needs to wait for the background
     #   to settle, or for some timeout before moving on
     # returns
