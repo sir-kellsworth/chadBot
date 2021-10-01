@@ -25,9 +25,9 @@ class RunescapeWindow:
             self.runescapeStart()
             self.window = self.windowSearch()
 
+        time.sleep(3)
         self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
         self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
-        time.sleep(3)
 
     #**************************************************************************
     # description
@@ -166,14 +166,16 @@ class RunescapeWindow:
     #**************************************************************************
     # description
     #   returns a pair x,y coordinate of the window corner
+    #   this assumes that the window will not be moved
     def cornerGet(self):
-        return (self.window.get_geometry().x, self.window.get_geometry().y)
+        return self.windowCorner
 
     #**************************************************************************
     # description
     #   returns the size of the runescape window
+    #   this assumes that the window will not be moved
     def sizeGet(self):
-        return (self.window.get_geometry().width, self.window.get_geometry().height)
+        return self.windowSize
 
     #**************************************************************************
     # description
@@ -204,6 +206,9 @@ class RunescapeWindow:
         img = img[330:-85, 621:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    #**************************************************************************
+    # description
+    #   returns only the tabs in the corner. No play area, chat screen or inventory
     def tabsGet(self):
         corner = self.cornerGet()
         size = self.sizeGet()

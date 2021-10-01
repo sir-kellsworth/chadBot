@@ -192,6 +192,27 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
+    #   returns if the health bar is above the players head or not
+    # returns
+    #   type        - bool
+    #   description - True if health bar is detected
+    def isFighting(self):
+        playArea = self.window.playAreaGet()
+        healthTop = playArea.shape[0] // 2 + 40
+        healthBottom = healthTop + 40
+        healthLeft = playArea.shape[1] // 2 + 60
+        healthRight = healthLeft + 60
+        playerHealth = playArea[healthTop:healthBottom, healthLeft:healthRight]
+        cv2.imshow('health', playerHealth)
+        cv2.waitKey(10)
+
+        healthBars = self.targetFindAll('healthBar', playerHealth, areaThreshold=self.targetAreas['healthBar'])
+
+        return len(healthBars) == 1
+
+
+    #**************************************************************************
+    # description
     #   waits for the fighting to start. Eventually needs to wait for the background
     #   to settle, or for some timeout before moving on
     # returns
@@ -202,14 +223,15 @@ class Fighter(Bot):
         #also should make it clear when the bot stops moving. The background will reset pretty quickly
         self.subtractor.reset()
         #waits a little to make sure we are attacking
-        time.sleep(5)
+        startTime = time.time()
+        currentTime = time.time()
+        while currentTime - startTime < 5:
+            if self.isFighting():
+                return STATE_FIGHT_FINISH
+            time.sleep(0.5)
+            currentTime = time.time()
 
-        playArea = self.window.playAreaGet()
-        healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
-        if len(healthBars) >= 1:
-            return STATE_FIGHT_FINISH
-        else:
-            return STATE_FIGHT_START
+        return STATE_FIGHT_START
 
     #**************************************************************************
     # description
@@ -222,13 +244,7 @@ class Fighter(Bot):
         fighting = True
 
         self.idleMouse.idleStart()
-        while fighting:
-            playArea = self.window.playAreaGet()
-            healthBars = self.targetFindAll('healthBar', playArea, areaThreshold=self.targetAreas['healthBar'])
-            if len(healthBars) < 1:
-                fighting = False
-                break
-
+        while self.isFighting():
             time.sleep(0.5)
 
         self.idleMouse.idleStop()
