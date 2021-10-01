@@ -198,11 +198,13 @@ class Fighter(Bot):
     #   description - True if health bar is detected
     def isFighting(self):
         playArea = self.window.playAreaGet()
-        healthTop = playArea.shape[0] // 2 + 45
-        healthBottom = healthTop + 20
+        healthTop = playArea.shape[0] // 2 + 40
+        healthBottom = healthTop + 40
         healthLeft = playArea.shape[1] // 2 + 60
-        healthRight = healthLeft + 50
+        healthRight = healthLeft + 60
         playerHealth = playArea[healthTop:healthBottom, healthLeft:healthRight]
+        cv2.imshow('health', playerHealth)
+        cv2.waitKey(10)
 
         healthBars = self.targetFindAll('healthBar', playerHealth, areaThreshold=self.targetAreas['healthBar'])
 
@@ -221,12 +223,15 @@ class Fighter(Bot):
         #also should make it clear when the bot stops moving. The background will reset pretty quickly
         self.subtractor.reset()
         #waits a little to make sure we are attacking
-        time.sleep(5)
+        startTime = time.time()
+        currentTime = time.time()
+        while currentTime - startTime < 5:
+            if self.isFighting():
+                return STATE_FIGHT_FINISH
+            time.sleep(0.5)
+            currentTime = time.time()
 
-        if self.isFighting():
-            return STATE_FIGHT_FINISH
-        else:
-            return STATE_FIGHT_START
+        return STATE_FIGHT_START
 
     #**************************************************************************
     # description
