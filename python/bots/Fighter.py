@@ -36,7 +36,8 @@ class Fighter(Bot):
             'healthBar':    ([0, 255, 0], [0, 255, 0])
         }
         self.targetAreas = {
-            'cow': 350,
+            'largeEnemy': 350,
+            'mediumEnemy': 200,
             'bankWindow': 10,
             'healthBar': 10
         }
@@ -203,8 +204,9 @@ class Fighter(Bot):
         healthLeft = playArea.shape[1] // 2 + 60
         healthRight = healthLeft + 60
         playerHealth = playArea[healthTop:healthBottom, healthLeft:healthRight]
-        cv2.imshow('health', playerHealth)
-        cv2.waitKey(10)
+        if self.debug:
+            cv2.imshow('health', playerHealth)
+            cv2.waitKey(10)
 
         healthBars = self.targetFindAll('healthBar', playerHealth, areaThreshold=self.targetAreas['healthBar'])
 
