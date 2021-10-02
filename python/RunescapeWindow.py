@@ -180,7 +180,7 @@ class RunescapeWindow:
         corner = self.cornerGet()
         size = self.sizeGet()
         img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
-        img = img[25:505, 25:615]
+        img = img[25:500, 25:615]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
@@ -190,7 +190,7 @@ class RunescapeWindow:
         corner = self.cornerGet()
         size = self.sizeGet()
         img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
-        img = img[330:-85, 621:-9]
+        img = img[330:-85, 631:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
@@ -208,7 +208,10 @@ class RunescapeWindow:
     def templatesLoad(self):
         templates = {}
 
+        #login buttons
         templates['existingUserButton'] = cv2.imread('templates/existingUserButton.png', 0)
+
+        #tabs buttons
         templates['attackStyle'] = cv2.imread('templates/attackStyle.png', 0)
         templates['emojis'] = cv2.imread('templates/emojis.png', 0)
         templates['emotes'] = cv2.imread('templates/emotes.png', 0)
@@ -222,6 +225,10 @@ class RunescapeWindow:
         templates['settings'] = cv2.imread('templates/settings.png', 0)
         templates['songs'] = cv2.imread('templates/songs.png', 0)
         templates['spells'] = cv2.imread('templates/spells.png', 0)
+
+        #bank buttons
+        templates['bankDepositAll'] = cv2.imread('templates/bankDepositAll.png', 0)
+        templates['bankExitButton'] = cv2.imread('templates/bankExitButton.png', 0)
 
         return templates
 
@@ -239,7 +246,7 @@ class RunescapeWindow:
     #   dictionary of center (x,y) and size (width, height)
     def imageMatch(self, background, template):
         grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
-        result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF)
+        result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF_NORMED)
         min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
         x, y = minLoc
         height, width = template.shape[::]

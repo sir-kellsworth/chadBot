@@ -94,7 +94,7 @@ class Bot:
             boundingBox = (center[0] - halfWidth, center[1] - halfHeight, center[0] + halfWidth, center[1] + halfHeight)
             cv2.rectangle(debugWindow, (boundingBox[0], boundingBox[1]), (boundingBox[2], boundingBox[3]), (0, 0, 255))
             cv2.imshow('debug window', debugWindow)
-            cv2.waitKey(1)
+            cv2.waitKey(30)
 
     #**************************************************************************
     # description
