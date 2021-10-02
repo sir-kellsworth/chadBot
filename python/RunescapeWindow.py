@@ -29,6 +29,8 @@ class RunescapeWindow:
         self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
         self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
 
+        self.templates = self.buttonTemplatesLoad()
+
     #**************************************************************************
     # description
     #   selects a world (326)
@@ -68,12 +70,13 @@ class RunescapeWindow:
         _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
         buttons = self.buttonsFind(thrash, 3000, 5000)
 
-        existingUserButton = None
-        rightmost = 0
-        for button in buttons:
-            if button['center'][0] > rightmost:
-                existingUserButton = button
-                rightmost = button['center'][0]
+        #existingUserButton = None
+        #rightmost = 0
+        #for button in buttons:
+        #    if button['center'][0] > rightmost:
+        #        existingUserButton = button
+        #        rightmost = button['center'][0]
+        existingUserButton = self.imageMatch(screen, self.templates['existingUserButton'])
 
         self.absoluteClick(existingUserButton['center'], 'left')
         time.sleep(1)
@@ -91,13 +94,8 @@ class RunescapeWindow:
         time.sleep(1)
 
         #also need to open the inventory
-        tabs = []
-        while len(tabs) == 0:
-            tabs = self.tabsGet()
-            time.sleep(1)
-        button = tabs[10]['center']
-        button = (button[0] + 596, button[1] + 585)
-        self.absoluteClick(button, 'left')
+        inventory = self.imageMatch(self.screenGet(), self.templates['inventory'])
+        self.absoluteClick(inventory['center'], 'left')
         time.sleep(1)
 
         #force screen to be topdown view
@@ -208,7 +206,7 @@ class RunescapeWindow:
 
     #**************************************************************************
     # description
-    #   returns only the tabs in the corner. No play area, chat screen or inventory
+    #   returns only the tabs in the bottom corner. No play area, chat screen or inventory
     def tabsGet(self):
         corner = self.cornerGet()
         size = self.sizeGet()
@@ -217,9 +215,30 @@ class RunescapeWindow:
         window = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         gray = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
         #reduces the color range to highlight button areas
-        _, thrash = cv2.threshold(gray, 30, 230, cv2.THRESH_BINARY_INV)
-        buttons = self.buttonsFind(thrash, 400, 3000)
-        return buttons
+        #_, thrash = cv2.threshold(gray, 30, 230, cv2.THRESH_BINARY_INV)
+        #buttons = self.buttonsFind(thrash, 400, 3000)
+
+        #return buttons
+        return img
+
+    def buttonTemplatesLoad(self):
+        templates = {}
+
+        templates['existingUserButton'] = cv2.imread('templates/existingUserButton.png', 0)
+        templates['inventory'] = cv2.imread('templates/inventory.png', 0)
+
+        return templates
+
+    def imageMatch(self, background, template):
+        grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
+        result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF)
+        min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
+        x, y = minLoc
+        height, width = template.shape[::]
+
+        matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
+
+        return matched
 
     #**************************************************************************
     # description
