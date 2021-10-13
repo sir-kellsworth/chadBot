@@ -9,5 +9,6 @@ import RunescapeWindow
 profile = Profile.Profile("config/miner.py")
 window = RunescapeWindow.RunescapeWindow()
 
-window.worldPick()
-window.login(profile.emailGet(), profile.passwordGet())
+screen = window.screenGet()
+existingUserButton = window.imageMatch(screen, window.templates['clickToPlayButton'])
+print(existingUserButton)

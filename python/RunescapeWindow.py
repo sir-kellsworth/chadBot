@@ -29,6 +29,8 @@ class RunescapeWindow:
         self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
         self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
 
+        self.templates = self.templatesLoad()
+
     #**************************************************************************
     # description
     #   selects a world (326)
@@ -63,17 +65,7 @@ class RunescapeWindow:
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
         screen = self.screenGet()
-        gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
-        #reduces the color range to highlight button areas
-        _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
-        buttons = self.buttonsFind(thrash, 3000, 5000)
-
-        existingUserButton = None
-        rightmost = 0
-        for button in buttons:
-            if button['center'][0] > rightmost:
-                existingUserButton = button
-                rightmost = button['center'][0]
+        existingUserButton = self.imageMatch(screen, self.templates['existingUserButton'])
 
         self.absoluteClick(existingUserButton['center'], 'left')
         time.sleep(1)
@@ -91,13 +83,8 @@ class RunescapeWindow:
         time.sleep(1)
 
         #also need to open the inventory
-        tabs = []
-        while len(tabs) == 0:
-            tabs = self.tabsGet()
-            time.sleep(1)
-        button = tabs[10]['center']
-        button = (button[0] + 596, button[1] + 585)
-        self.absoluteClick(button, 'left')
+        inventory = self.imageMatch(self.screenGet(), self.templates['inventory'])
+        self.absoluteClick(inventory['center'], 'left')
         time.sleep(1)
 
         #force screen to be topdown view
@@ -193,7 +180,7 @@ class RunescapeWindow:
         corner = self.cornerGet()
         size = self.sizeGet()
         img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
-        img = img[25:505, 25:615]
+        img = img[25:500, 25:615]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
@@ -203,23 +190,70 @@ class RunescapeWindow:
         corner = self.cornerGet()
         size = self.sizeGet()
         img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
-        img = img[330:-85, 621:-9]
+        img = img[330:-85, 631:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
     # description
-    #   returns only the tabs in the corner. No play area, chat screen or inventory
-    def tabsGet(self):
+    #   returns only the tabs in the bottom corner. No play area, chat screen or inventory
+    def tabsAreaGet(self):
         corner = self.cornerGet()
         size = self.sizeGet()
         img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
-        img = img[596:-5, 585:-2]
-        window = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        gray = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
-        #reduces the color range to highlight button areas
-        _, thrash = cv2.threshold(gray, 30, 230, cv2.THRESH_BINARY_INV)
-        buttons = self.buttonsFind(thrash, 400, 3000)
-        return buttons
+        return img[596:-5, 585:-2]
+
+    #**************************************************************************
+    # description
+    #   loads all of the templates available for the bot to find
+    def templatesLoad(self):
+        templates = {}
+
+        #login buttons
+        templates['existingUserButton'] = cv2.imread('templates/existingUserButton.png', 0)
+
+        #tabs buttons
+        templates['attackStyle'] = cv2.imread('templates/attackStyle.png', 0)
+        templates['emojis'] = cv2.imread('templates/emojis.png', 0)
+        templates['emotes'] = cv2.imread('templates/emotes.png', 0)
+        templates['equipment'] = cv2.imread('templates/equipment.png', 0)
+        templates['friends'] = cv2.imread('templates/friends.png', 0)
+        templates['inventory'] = cv2.imread('templates/inventory.png', 0)
+        templates['levels'] = cv2.imread('templates/levels.png', 0)
+        templates['memberSettings'] = cv2.imread('templates/memberSettings.png', 0)
+        templates['prayers'] = cv2.imread('templates/prayers.png', 0)
+        templates['quests'] = cv2.imread('templates/quests.png', 0)
+        templates['settings'] = cv2.imread('templates/settings.png', 0)
+        templates['songs'] = cv2.imread('templates/songs.png', 0)
+        templates['spells'] = cv2.imread('templates/spells.png', 0)
+
+        #bank buttons
+        templates['bankDepositAll'] = cv2.imread('templates/bankDepositAll.png', 0)
+        templates['bankExitButton'] = cv2.imread('templates/bankExitButton.png', 0)
+
+        return templates
+
+    #**************************************************************************
+    # description
+    #   searches for a button using matchTemplate and returns location of button
+    # parameters
+    #   background
+    #       type        - np.array
+    #       description - background to search for template button
+    #   template
+    #       type        - np.array
+    #       description - template button to match in the background
+    # returns
+    #   dictionary of center (x,y) and size (width, height)
+    def imageMatch(self, background, template):
+        grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
+        result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF_NORMED)
+        min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
+        x, y = minLoc
+        height, width = template.shape[::]
+
+        matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
+
+        return matched
 
     #**************************************************************************
     # description

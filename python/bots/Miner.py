@@ -25,7 +25,7 @@ class Miner(Bot):
         super().__init__(profile, window)
         #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
-        self.mines = {
+        self.targetColorRanges = {
             'tin':    ([54, 54, 64], [78, 78, 98]),
             'copper': ([40, 85, 130], [64, 105, 153]),#([50, 91, 139], [64, 105, 153]),
             #'iron':   ([7, 138, 50], [10, 146, 85]),
@@ -69,8 +69,9 @@ class Miner(Bot):
         emptyMask = cv2.inRange(inventory, np.array(self.inventoryRange[0]), np.array(self.inventoryRange[1]))
 
         inventoryArea = cv2.bitwise_not(emptyMask)
-        cv2.imshow('inventory mask', inventoryArea)
-        cv2.waitKey(30)
+        if self.debug:
+            cv2.imshow('inventory mask', inventoryArea)
+            cv2.waitKey(30)
 
     #**************************************************************************
     # description
@@ -140,8 +141,8 @@ class Miner(Bot):
     #       description - single direction is either stairs at the bottom or top floor.
     #                     not single direction is a mid-floor that could go either way
     def flightClimb(self, direction, isSingleDirection):
-        upButtonOffset = (0, 24)
-        downButtonOffset = (0, 34)
+        upButtonOffset = (0, 34)
+        downButtonOffset = (0, 54)
 
         target = self.search('stairs', areaThreshold=50)
         center = target['center']
@@ -168,17 +169,6 @@ class Miner(Bot):
     # description
     #   deposits everything in the inventory into the bank
     def bankDeposit(self):
-        size = self.window.sizeGet()
-        depositAllButton = (490, 481)
-        depositAllButtonScaled = (depositAllButton[0] / size[0], depositAllButton[1] / size[1])
-        print("**********")
-        print("deposit all button scaled: " + str(depositAllButtonScaled))
-        print("**********")
-        bankCloseButton = (530, 55)
-        bankCloseButtonScaled = (bankCloseButton[0] / size[0], bankCloseButton[1] / size[1])
-        print("**********")
-        print("deposit all button scaled: " + str(bankCloseButtonScaled))
-        print("**********")
         #find bank window
         target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
         #click on bank window
@@ -186,10 +176,17 @@ class Miner(Bot):
         self.window.absoluteClick(self.randomPointSelect(target), 'left')
         time.sleep(2)
         #click on deposit all button
-        self.window.click(depositAllButtonScaled, 'left')
+        background = self.window.screenGet()
+        depositAll = self.window.imageMatch(background, self.window.templates['bankDepositAll'])
+        self.targetDisplay(depositAll)
+        self.window.absoluteClick(depositAll['center'], 'left')
         time.sleep(1)
+        closeBank = self.window.imageMatch(background, self.window.templates['bankExitButton'])
+        self.window.absoluteClick(closeBank['center'], 'left')
+        #self.window.click(depositAllButtonScaled, 'left')
+        #time.sleep(1)
         #close bank window
-        self.window.click(bankCloseButtonScaled, 'left')
+        #self.window.click(bankCloseButtonScaled, 'left')
 
         return STATE_MINE_RUN
 
