@@ -76,8 +76,16 @@ class RunescapeWindow:
         self.keyboard.type(password)
         time.sleep(0.8)
         self.keyboard.enter()
-        time.sleep(17)
-        #there is another 'play button' after in pretty much the same location
+
+        #need to wait for click to play button to appear.
+        waiting = True
+        while waiting:
+            screen = self.screenGet()
+            playButton = self.imageMatch(screen, self.templates['clickToPlayButton'])
+            if playButton != None:
+                waiting = False
+            else:
+                time.sleep(1)
         playButton = (existingUserButton['center'][0], existingUserButton['center'][1] + 20)
         self.absoluteClick(playButton, 'left')
         time.sleep(1)
@@ -210,6 +218,8 @@ class RunescapeWindow:
 
         #login buttons
         templates['existingUserButton'] = cv2.imread('templates/existingUserButton.png', 0)
+        templates['clickToPlayButton'] = cv2.imread('templates/clickToPlay.png', 0)
+        templates['logoutButton'] = cv2.imread('templates/logout.png', 0)
 
         #tabs buttons
         templates['attackStyle'] = cv2.imread('templates/attackStyle.png', 0)
@@ -245,13 +255,16 @@ class RunescapeWindow:
     # returns
     #   dictionary of center (x,y) and size (width, height)
     def imageMatch(self, background, template):
+        matched = None
+
         grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
         result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF_NORMED)
         min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
-        x, y = minLoc
-        height, width = template.shape[::]
+        if min < 0.1:
+            x, y = minLoc
+            height, width = template.shape[::]
 
-        matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
+            matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
 
         return matched
 

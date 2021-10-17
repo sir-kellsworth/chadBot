@@ -26,22 +26,32 @@ class Miner(Bot):
         #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
         self.targetColorRanges = {
-            'tin':    ([54, 54, 64], [78, 78, 98]),
-            'copper': ([40, 85, 130], [64, 105, 153]),#([50, 91, 139], [64, 105, 153]),
-            #'iron':   ([7, 138, 50], [10, 146, 85]),
-            #'gems':   ([150, 223, 61], [151, 235, 169]),
-            'bankWindow': ([99, 112, 122], [111, 150, 140]),
-            'stairs': ([2, 46, 76], [6, 50, 80])
+            'tin':          ([54, 54, 64], [78, 78, 98]),
+            'copper':       ([40, 85, 130], [64, 105, 153]),
+            'gold':         ([30, 111, 130], [50, 135, 154]),
+            #'iron':        ([7, 138, 50], [10, 146, 85]),
+            #'gems':        ([150, 223, 61], [151, 235, 169]),
+            'bankWindow':   ([99, 112, 122], [111, 150, 140]),
+            'bankChest':    ([35, 53, 78], [45, 63, 88]),
+            'stairs':       ([2, 46, 76], [6, 50, 80])
         }
         self.mineAreas = {
-            'tin': 170,
-            'copper': 40,
-            'bankWindow': 10
+            'tin':          170,
+            'copper':       40,
+            'gold':         170,
+            'bankWindow':   10,
+            'bankChest':    20
+        }
+        self.mineTimes = {
+        'tin':              15,
+        'copper':           15,
+        'gold':             40,
         }
         self.responTimes = {
-            'tin': 2.5,
-            'copper': 2.5,
-            'iron': 5,
+            'tin':          2.5,
+            'copper':       2.5,
+            'iron':         5,
+            'gold':         30
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING
@@ -223,7 +233,7 @@ class Miner(Bot):
         mining = True
         currentNum = self.numItemsGet()
 
-        endTime = time.time() + 15
+        endTime = time.time() + self.mineTimes[self.targetedMine]
         while mining:
             if self.numItemsGet() > currentNum:
                 mining = False

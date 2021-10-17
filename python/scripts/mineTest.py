@@ -16,6 +16,8 @@ profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 
 bot = Miner(profile, window, debug=True)
+while True:
+    bot.mine()
 
 while True:
     bot.step()
