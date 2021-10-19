@@ -22,6 +22,8 @@ class Miner(Bot):
     def __init__(self, profile, window, debug = False):
         self.debug = debug
         self.targetedMine = profile.targetGet()
+        self.bankType = profile.bankTypeGet()
+        self.numStairs = profile.numStairsGet()
         super().__init__(profile, window)
         #self.minningLocation = profile.valueGet('minningLocation')
         self.state = STATE_IDLE
@@ -43,9 +45,9 @@ class Miner(Bot):
             'bankChest':    20
         }
         self.mineTimes = {
-        'tin':              15,
-        'copper':           15,
-        'gold':             40,
+            'tin':          15,
+            'copper':       15,
+            'gold':         40,
         }
         self.responTimes = {
             'tin':          2.5,
@@ -112,16 +114,17 @@ class Miner(Bot):
     #   description - the next state
     def bankRun(self):
         size = self.window.sizeGet()
-        bankMapLocation = (748, 74)
-        bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
-        print("**********")
-        print("bank map button scaled: " + str(bankMapLocationScaled))
-        print("**********")
-        self.pathReplay('fromtintobank')
+        self.pathReplay('fromminetobank')
         time.sleep(1)
-        self.stairsClimb('up', 2)
-        self.window.click(bankMapLocationScaled, 'left')
-        time.sleep(10)
+        if self.numStairs != 0:
+            bankMapLocation = (748, 74)
+            bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
+            print("**********")
+            print("bank map button scaled: " + str(bankMapLocationScaled))
+            print("**********")
+            self.stairsClimb('up', 2)
+            self.window.click(bankMapLocationScaled, 'left')
+            time.sleep(10)
 
         return STATE_BANK_DEPOSIT
 
@@ -178,9 +181,10 @@ class Miner(Bot):
     #**************************************************************************
     # description
     #   deposits everything in the inventory into the bank
+    #   some banks are banks and others are chests. This is defined in the config
     def bankDeposit(self):
         #find bank window
-        target = self.search('bankWindow', areaThreshold=self.mineAreas['bankWindow'])
+        target = self.search(self.bankType, areaThreshold=self.mineAreas[self.bankType])
         #click on bank window
         self.targetDisplay(target)
         self.window.absoluteClick(self.randomPointSelect(target), 'left')
@@ -193,10 +197,6 @@ class Miner(Bot):
         time.sleep(1)
         closeBank = self.window.imageMatch(background, self.window.templates['bankExitButton'])
         self.window.absoluteClick(closeBank['center'], 'left')
-        #self.window.click(depositAllButtonScaled, 'left')
-        #time.sleep(1)
-        #close bank window
-        #self.window.click(bankCloseButtonScaled, 'left')
 
         return STATE_MINE_RUN
 
@@ -208,15 +208,16 @@ class Miner(Bot):
     #   description - the next state
     def mineRun(self):
         size = self.window.sizeGet()
-        stairsLocation = (720, 164)
-        stairsLocationScaled = (stairsLocation[0] / size[0], stairsLocation[1] / size[1])
-        print("**********")
-        print("stairs location button scaled: " + str(stairsLocationScaled))
-        print("**********")
-        self.window.click(stairsLocationScaled, 'left')
-        time.sleep(9)
-        self.stairsClimb('down', 2)
-        self.pathReplay('frombanktotin')
+        if self.numStairs != 0:
+            stairsLocation = (720, 164)
+            stairsLocationScaled = (stairsLocation[0] / size[0], stairsLocation[1] / size[1])
+            print("**********")
+            print("stairs location button scaled: " + str(stairsLocationScaled))
+            print("**********")
+            self.window.click(stairsLocationScaled, 'left')
+            time.sleep(9)
+            self.stairsClimb('down', 2)
+        self.pathReplay('frombanktomine')
         time.sleep(1)
 
         return STATE_MINING
