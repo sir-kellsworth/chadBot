@@ -115,7 +115,7 @@ class Miner(Bot):
     def bankRun(self):
         size = self.window.sizeGet()
         self.pathReplay('fromminetobank')
-        time.sleep(1)
+        time.sleep(3)
         if self.numStairs != 0:
             bankMapLocation = (748, 74)
             bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
@@ -218,7 +218,7 @@ class Miner(Bot):
             time.sleep(9)
             self.stairsClimb('down', 2)
         self.pathReplay('frombanktomine')
-        time.sleep(1)
+        time.sleep(3)
 
         return STATE_MINING
 
