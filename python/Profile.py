@@ -15,11 +15,23 @@ class Profile:
         self.login = configparser.ConfigParser()
         self.login.read('config/login.config')
 
+        #**************************************************************************
+        # description
+        #   returns the bank type the bot uses. (bankWindow, chest)
+    def bankTypeGet(self):
+        return self.config.get('Mining', 'bankType')
+
     #**************************************************************************
     # description
     #   returns the email from the config file
     def emailGet(self):
         return self.login.get('Email', 'email')
+
+    #**************************************************************************
+    # description
+    #   returns the number of stairs to climb to get to the bank
+    def numStairsGet(self):
+        return int(self.config.get('Mining', 'numStairs'))
 
     #**************************************************************************
     # description
