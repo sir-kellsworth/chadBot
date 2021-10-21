@@ -44,7 +44,6 @@ class Fighter(Bot):
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_FIGHT_START
 
-        self.subtractor = BackgroundSubtractor(self.window, debug)
         self.idleMouse = IdleMouse(self.window)
 
     #**************************************************************************
@@ -81,10 +80,10 @@ class Fighter(Bot):
         returnState = None
 
         if self.healthGet() > 3:
-            target = self.search(self.target, areaThreshold=self.targetAreas[self.target])
+            target = self.search()
             self.targetDisplay(target)
             center = target['center']
-            center = (center[0] + 30, center[1] + 30)
+            center = (center[0] + (target['size'][0] // 2), center[1] + target['size'][1] // 2)
             self.window.straightClick(center, 'left', duration=0)
 
             returnState = STATE_TARGET_TRACK
@@ -105,82 +104,39 @@ class Fighter(Bot):
     #       description - minimum area of contour to look for
     # returns
     #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
-    def search(self, target, areaThreshold):
+    def search(self):
         searching = True
         while searching:
-            nonBackground = self.subtractor.nextGet()
-            targetArea = self.targetFindClosestBackground(nonBackground, areaThreshold)
-            if targetArea == None:
-                time.sleep(0.5)
-            else:
-                searching = False
+            playArea = self.window.playAreaGet()
+            for targetName, targetTemplate in self.templates.items():
+                targetArea = self.imageMatch(playArea, targetTemplate)
+                if targetArea != None:
+                    print(targetName)
+                    cv2.imshow('target', targetTemplate)
+                    cv2.waitKey(20)
+                    searching = False
+                    break
+            if searching:
+                time.sleep(0.2)
 
         return targetArea
 
-    #**************************************************************************
-    # description
-    #   searches the background for moving targets closest to the player
-    # parameters
-    #   nonBackground
-    #       type        - np.array
-    #       description - area of the window to search
-    #   areaThreshold
-    #       type        - int
-    #       description - minimum area of contour to look for
-    # returns
-    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
-    #   description - dictionary of 'center', 'area' and 'size'
-    def targetFindClosestBackground(self, nonBackground, areaThreshold):
-        mines = self.targetFindAllBackground(nonBackground, areaThreshold)
+    def imageMatch(self, background, template):
+        matched = None
 
-        if len(mines) > 0:
-            closest = 10000
-            target = ()
-            playAreaShape = nonBackground.shape
-            playerX = (playAreaShape[0] / 2) + 50
-            playerY = (playAreaShape[1] / 2) + 50
-            for next in mines:
-                mineLocation = next['center']
-                distance = math.sqrt((playerX - mineLocation[0])**2 + (playerY - mineLocation[1])**2)
-                if distance < closest:
-                    closest = distance
-                    target = next
-            return target
-        else:
-            return None
+        grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
+        result = cv2.matchTemplate(grayBackground, template, cv2.TM_CCOEFF_NORMED)
+        min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
+        if max > 0.66:
+            print(max)
+            x, y = maxLoc
+            height, width = template.shape[::]
 
-    #**************************************************************************
-    # description
-    #   searches the background for all moving targets
-    # parameters
-    #   nonBackground
-    #       type        - np.array
-    #       description - area of the window to search
-    #   areaThreshold
-    #       type        - int
-    #       description - minimum area of contour to look for
-    # returns
-    #   type        - 'center' - (x,y), 'area' - float and 'size' - (width, height)
-    #   description - list of dictionary of 'center', 'area' and 'size'
-    def targetFindAllBackground(self, nonBackground, areaThreshold):
-        contours, _ = cv2.findContours(nonBackground.copy(), 1, 2)
-        mineAreas = []
-        for next in contours:
-            x, y, w, h = cv2.boundingRect(next)
-            #good for debuging. Draws rectagles over the mines
-            if self.debug:
-                cv2.rectangle(nonBackground, (x, y), (x+w, y+h), (255, 255, 255), -1)
-                cv2.imshow('mask', nonBackground)
+            print(width // 2)
+            print(height // 2)
+            matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
 
-            #gets number of mines found
-            area = cv2.contourArea(next)
-            if area > areaThreshold:
-                M = cv2.moments(next)
-                centerX = int(M['m10'] / M['m00'])
-                centerY = int(M['m01'] / M['m00'])
-                mineAreas.append({'area': area, 'center': (centerX, centerY), 'size': (w, h)})
-
-        return mineAreas
+        return matched
 
     #**************************************************************************
     # description
@@ -221,13 +177,10 @@ class Fighter(Bot):
     #   type        - int
     #   description - the next state
     def targetTrack(self):
-        #should make background image while fighting. targets should be obvious after this
-        #also should make it clear when the bot stops moving. The background will reset pretty quickly
-        self.subtractor.reset()
         #waits a little to make sure we are attacking
         startTime = time.time()
         currentTime = time.time()
-        while currentTime - startTime < 5:
+        while currentTime - startTime < 10:
             if self.isFighting():
                 return STATE_FIGHT_FINISH
             time.sleep(0.5)

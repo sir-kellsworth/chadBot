@@ -260,6 +260,7 @@ class RunescapeWindow:
         grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
         result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF_NORMED)
         min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
+        print(min)
         if min < 0.1:
             x, y = minLoc
             height, width = template.shape[::]
