@@ -111,7 +111,6 @@ class Fighter(Bot):
             for targetName, targetTemplate in self.templates.items():
                 targetArea = self.window.imageMatch(playArea, targetTemplate, threshold=0.69)
                 if targetArea != None:
-                    print(targetName)
                     searching = False
                     break
             if searching:
