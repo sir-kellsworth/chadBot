@@ -36,10 +36,7 @@ class Bot:
                 baseImage = cv2.imread(os.path.join(root, file), 0)
                 templates[fileBase] = baseImage
                 templates[fileBase + "-rotated90"] = cv2.rotate(baseImage, cv2.ROTATE_90_CLOCKWISE)
-                templates[fileBase + "-rotated180"] = cv2.flip(cv2.rotate(baseImage, cv2.ROTATE_180), -1)
                 templates[fileBase + "-flipped"] = cv2.flip(baseImage, -1)
-                templates[fileBase + "-flippedBoth"] = cv2.flip(baseImage, 0)
-                templates[fileBase + "-flippedVirtical"] = cv2.flip(baseImage, 1)
                 templates[fileBase + "-rotated-90"] = cv2.rotate(baseImage, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 

@@ -83,7 +83,7 @@ class Fighter(Bot):
             target = self.search()
             self.targetDisplay(target)
             center = target['center']
-            center = (center[0] + (target['size'][0] // 2), center[1] + target['size'][1] // 2)
+            center = (center[0] + (target['size'][0] // 2), center[1] + (target['size'][1] // 2) + 5)
             self.window.straightClick(center, 'left', duration=0)
 
             returnState = STATE_TARGET_TRACK
@@ -109,34 +109,15 @@ class Fighter(Bot):
         while searching:
             playArea = self.window.playAreaGet()
             for targetName, targetTemplate in self.templates.items():
-                targetArea = self.imageMatch(playArea, targetTemplate)
+                targetArea = self.window.imageMatch(playArea, targetTemplate, threshold=0.69)
                 if targetArea != None:
                     print(targetName)
-                    cv2.imshow('target', targetTemplate)
-                    cv2.waitKey(20)
                     searching = False
                     break
             if searching:
                 time.sleep(0.2)
 
         return targetArea
-
-    def imageMatch(self, background, template):
-        matched = None
-
-        grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
-        result = cv2.matchTemplate(grayBackground, template, cv2.TM_CCOEFF_NORMED)
-        min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
-        if max > 0.66:
-            print(max)
-            x, y = maxLoc
-            height, width = template.shape[::]
-
-            print(width // 2)
-            print(height // 2)
-            matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}
-
-        return matched
 
     #**************************************************************************
     # description
@@ -183,7 +164,7 @@ class Fighter(Bot):
         while currentTime - startTime < 10:
             if self.isFighting():
                 return STATE_FIGHT_FINISH
-            time.sleep(0.5)
+            time.sleep(0.2)
             currentTime = time.time()
 
         return STATE_FIGHT_START
