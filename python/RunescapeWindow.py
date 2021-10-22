@@ -252,16 +252,19 @@ class RunescapeWindow:
     #   template
     #       type        - np.array
     #       description - template button to match in the background
+    #   threshold
+    #       type        - float
+    #       description - required accuracy to match an object
     # returns
     #   dictionary of center (x,y) and size (width, height)
-    def imageMatch(self, background, template):
+    def imageMatch(self, background, template, threshold=0.9, mask=None):
         matched = None
 
         grayBackground = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
-        result = cv2.matchTemplate(grayBackground, template, cv2.TM_SQDIFF_NORMED)
+        result = cv2.matchTemplate(grayBackground, template, cv2.TM_CCOEFF_NORMED, mask=mask)
         min, max, minLoc, maxLoc = cv2.minMaxLoc(result)
-        if min < 0.1:
-            x, y = minLoc
+        if max > threshold and max < 1:
+            x, y = maxLoc
             height, width = template.shape[::]
 
             matched = {'center': (x + (width // 2), y + (height // 2)), 'size': (width, height)}

@@ -15,9 +15,12 @@ class Profile:
         self.login = configparser.ConfigParser()
         self.login.read('config/login.config')
 
-        #**************************************************************************
-        # description
-        #   returns the bank type the bot uses. (bankWindow, chest)
+    def templatesFolderGet(self):
+        return self.config.get('Mining', 'templateFolder')
+
+    #**************************************************************************
+    # description
+    #   returns the bank type the bot uses. (bankWindow, chest)
     def bankTypeGet(self):
         return self.config.get('Mining', 'bankType')
 
