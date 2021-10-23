@@ -63,6 +63,7 @@ class Miner(Bot):
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING
+        self.clayMine = cv2.imread('templates/clayOre.png', 0)
 
     #**************************************************************************
     # description
@@ -100,8 +101,13 @@ class Miner(Bot):
     def mine(self):
         returnState = None
 
-        if self.numItemsGet() < 27:
-            target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
+        if self.numItemsGet() < 28:
+            #target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
+            target = None
+            while target == None:
+                background = self.window.playAreaGet()
+                target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
+                time.sleep(0.1)
             self.targetDisplay(target)
             self.window.straightClick(self.randomPointSelect(target), 'left')
             self.mineWait(self.responTimes[self.targetedMine])

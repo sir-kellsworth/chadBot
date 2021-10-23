@@ -88,7 +88,7 @@ class Bot:
             #gets number of mines found
             area = cv2.contourArea(next)
             #500 just picked. Might need to adjust this
-            if area > 130:
+            if area > 160:
                 M = cv2.moments(next)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
