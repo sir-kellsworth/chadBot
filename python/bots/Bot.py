@@ -25,7 +25,7 @@ class Bot:
             self.paths[path['PathName']] = InputReplay(path['File'], window)
         self.idleMessages = profile.idleMessagesGet()
         self.idleChance = profile.idleChanceGet()
-        self.templates = self.templatesLoad(profile.templatesFolderGet())
+        #self.templates = self.templatesLoad(profile.templatesFolderGet())
 
     #**************************************************************************
     def templatesLoad(self, templateFolder):

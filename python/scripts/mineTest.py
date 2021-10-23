@@ -11,7 +11,7 @@ import RunescapeWindow
 import signal
 import time
 
-configFile = os.getcwd() + "/config/goldMiner.config"
+configFile = os.getcwd() + "/config/clayMiner.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 

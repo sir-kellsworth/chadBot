@@ -31,6 +31,7 @@ class Miner(Bot):
             'tin':          ([54, 54, 64], [78, 78, 98]),
             'copper':       ([40, 85, 130], [64, 105, 153]),
             'gold':         ([30, 111, 130], [50, 135, 154]),
+            'clay':         ([50, 113, 138], [98, 151, 196]),
             #'iron':        ([7, 138, 50], [10, 146, 85]),
             #'gems':        ([150, 223, 61], [151, 235, 169]),
             'bankWindow':   ([99, 112, 122], [111, 150, 140]),
@@ -41,6 +42,7 @@ class Miner(Bot):
             'tin':          170,
             'copper':       40,
             'gold':         170,
+            'clay':         60,
             'bankWindow':   10,
             'bankChest':    20
         }
@@ -48,12 +50,14 @@ class Miner(Bot):
             'tin':          15,
             'copper':       15,
             'gold':         40,
+            'clay':         5,
         }
         self.responTimes = {
             'tin':          2.5,
             'copper':       2.5,
             'iron':         5,
-            'gold':         30
+            'gold':         30,
+            'clay':         0.5
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING

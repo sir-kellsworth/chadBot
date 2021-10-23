@@ -20,7 +20,7 @@ configFile = os.getcwd() + "/config/fighter.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
 
-bot = Fighter(profile, window, debug=True)
+bot = Fighter(profile, window, debug=False)
 
 while True:
     bot.step()
