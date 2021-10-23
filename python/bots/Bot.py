@@ -248,15 +248,15 @@ class Bot:
     #   type            - pair of x,y
     #   description     - random coordinates from inside the target rectangle
     def randomPointSelect(self, target):
-        center = target['center']
+        center = (target['center'][0] + 15, target['center'][1] + 20)
         size = target['size']
 
         #all of this is to avoid accidentally clicking outside the object bounds
-        widthMin = center[0] + (size[0] // 2)
-        widthMax = center[0] + (size[0] // 2)
-        heightMin = center[1] + (size[1] // 2)
-        heightMax = center[1] + (size[1] // 2)
-        randomWidth = random.randint(widthMin, widthMax)
-        randomHeight = random.randint(heightMin, heightMax)
+        #widthMin = center[0] + (size[0] // 2)
+        #widthMax = center[0] + (size[0] // 2)
+        #heightMin = center[1] + (size[1] // 2)
+        #heightMax = center[1] + (size[1] // 2)
+        #randomWidth = random.randint(widthMin, widthMax)
+        #randomHeight = random.randint(heightMin, heightMax)
 
-        return (randomWidth, randomHeight)
+        return center
