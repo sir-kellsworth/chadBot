@@ -31,11 +31,12 @@ class Miner(Bot):
             'tin':          ([54, 54, 64], [78, 78, 98]),
             'copper':       ([40, 85, 130], [64, 105, 153]),
             'gold':         ([30, 111, 130], [50, 135, 154]),
-            'clay':         ([50, 113, 138], [98, 151, 196]),
+            'clay':         ([40, 103, 128], [98, 161, 196]),
             #'iron':        ([7, 138, 50], [10, 146, 85]),
             #'gems':        ([150, 223, 61], [151, 235, 169]),
             'bankWindow':   ([99, 112, 122], [111, 150, 140]),
             'bankChest':    ([35, 53, 78], [45, 63, 88]),
+            'banker':       ([2, 49, 71], [6, 53, 75]),
             'stairs':       ([2, 46, 76], [6, 50, 80])
         }
         self.mineAreas = {
@@ -44,7 +45,8 @@ class Miner(Bot):
             'gold':         170,
             'clay':         60,
             'bankWindow':   10,
-            'bankChest':    20
+            'bankChest':    20,
+            'banker':       20
         }
         self.mineTimes = {
             'tin':          15,
@@ -61,6 +63,7 @@ class Miner(Bot):
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING
+        self.clayMine = cv2.imread('templates/clayOre.png', 0)
 
     #**************************************************************************
     # description
@@ -98,8 +101,13 @@ class Miner(Bot):
     def mine(self):
         returnState = None
 
-        if self.numItemsGet() < 27:
-            target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
+        if self.numItemsGet() < 28:
+            #target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
+            target = None
+            while target == None:
+                background = self.window.playAreaGet()
+                target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
+                time.sleep(0.1)
             self.targetDisplay(target)
             self.window.straightClick(self.randomPointSelect(target), 'left')
             self.mineWait(self.responTimes[self.targetedMine])
@@ -192,10 +200,10 @@ class Miner(Bot):
         #click on bank window
         self.targetDisplay(target)
         self.window.absoluteClick(self.randomPointSelect(target), 'left')
-        time.sleep(2)
+        time.sleep(5)
         #click on deposit all button
         background = self.window.screenGet()
-        depositAll = self.window.imageMatch(background, self.window.templates['bankDepositAll'])
+        depositAll = self.window.imageMatch(background, self.window.templates['bankDepositAll'], threshold=0.6)
         self.targetDisplay(depositAll)
         self.window.absoluteClick(depositAll['center'], 'left')
         time.sleep(1)
