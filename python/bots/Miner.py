@@ -1,4 +1,5 @@
 from bots.Bot import *
+import bots.RandomEventDetection
 
 STATE_MINING = 0
 STATE_BANK_RUN = 1
@@ -21,6 +22,7 @@ class Miner(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
+        self.red = bots.RandomEventDetection.RandomEventDetection(window, self.randomEventHandle)
         self.targetedMine = profile.targetGet()
         self.bankType = profile.bankTypeGet()
         self.numStairs = profile.numStairsGet()
@@ -64,6 +66,9 @@ class Miner(Bot):
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING
         self.clayMine = cv2.imread('templates/clayOre.png', 0)
+
+    def randomEventHandle(self, location):
+        self.window.straightClick(self.randomPointSelect(target), 'right')
 
     #**************************************************************************
     # description

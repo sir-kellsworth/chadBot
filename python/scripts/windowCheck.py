@@ -12,7 +12,7 @@ window = RunescapeWindow.RunescapeWindow()
 
 while True:
     inventory = window.playAreaGet()
-    stairs = ([2, 49, 71], [6, 53, 75])
+    stairs = ([0, 170, 170], [20, 265, 266])
     mask = cv2.inRange(inventory, np.array(stairs[0]), np.array(stairs[1]))
     cv2.imshow('actual', inventory)
     cv2.imshow('mask', mask)

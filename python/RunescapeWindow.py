@@ -89,7 +89,7 @@ class RunescapeWindow:
                 time.sleep(1)
         playButton = (existingUserButton['center'][0], existingUserButton['center'][1] + 20)
         self.absoluteClick(playButton, 'left')
-        time.sleep(1)
+        time.sleep(5)
 
         #also need to open the inventory
         inventory = self.imageMatch(self.screenGet(), self.templates['inventory'])
