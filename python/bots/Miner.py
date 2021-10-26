@@ -2,9 +2,11 @@ from bots.Bot import *
 import bots.RandomEventDetection
 
 STATE_MINING = 0
-STATE_BANK_RUN = 1
-STATE_BANK_DEPOSIT = 2
-STATE_MINE_RUN = 3
+STATE_EVENT_WAIT = 1
+STATE_RANDOM_EVENT_DISMISS = 2
+STATE_BANK_RUN = 3
+STATE_BANK_DEPOSIT = 4
+STATE_MINE_RUN = 5
 
 class Miner(Bot):
     #**************************************************************************
@@ -23,6 +25,7 @@ class Miner(Bot):
     def __init__(self, profile, window, debug = False):
         self.debug = debug
         self.red = bots.RandomEventDetection.RandomEventDetection(window, self.randomEventHandle)
+        self.randomEventLocation = None
         self.targetedMine = profile.targetGet()
         self.bankType = profile.bankTypeGet()
         self.numStairs = profile.numStairsGet()
@@ -66,9 +69,22 @@ class Miner(Bot):
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
         self.state = STATE_MINING
         self.clayMine = cv2.imread('templates/clayOre.png', 0)
+        self.emptyClayMine = cv2.imread('templates/emptyClayOre.png', 0)
 
     def randomEventHandle(self, location):
+        #eventually this will be a queue
+        #self.eventQueue.add((STATE_RANDOM_EVENT_DISMISS, location))
+        self.randomEventLocation = location
+
+    def randomEventDismiss(self):
+        target = (self.randomEventLocation[0], self.randomEventLocation[1] + 50)
         self.window.straightClick(self.randomPointSelect(target), 'right')
+        time.sleep(0.5)
+        playArea = self.window.playAreaGet()
+        dismissMessage = self.window.imageMatch(playArea, self.dismissText)
+        self.window.straightClick(dismissMessage, 'left')
+        time.sleep(0.5)
+        self.randomEventLocation = False
 
     #**************************************************************************
     # description
@@ -76,6 +92,10 @@ class Miner(Bot):
     def step(self):
         if self.state == STATE_MINING:
             self.state = self.mine()
+        elif self.state == STATE_EVENT_WAIT:
+            self.state = self.eventWait()
+        elif self.state == STATE_RANDOM_EVENT_DISMISS:
+            self.state = self.randomEventDismiss()
         elif self.state == STATE_BANK_RUN:
             self.state = self.bankRun()
         elif self.state == STATE_BANK_DEPOSIT:
@@ -107,7 +127,6 @@ class Miner(Bot):
         returnState = None
 
         if self.numItemsGet() < 28:
-            #target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             target = None
             while target == None:
                 background = self.window.playAreaGet()
@@ -115,13 +134,34 @@ class Miner(Bot):
                 time.sleep(0.1)
             self.targetDisplay(target)
             self.window.straightClick(self.randomPointSelect(target), 'left')
-            self.mineWait(self.responTimes[self.targetedMine])
 
-            returnState = STATE_MINING
+            returnState = STATE_EVENT_WAIT
         else:
             returnState = STATE_BANK_RUN
 
         return returnState
+
+    def eventWait(self):
+        waiting = True
+        nextState = None
+        waitForFull = False
+
+        while waiting:
+            background = self.window.playAreaGet()
+            emptyTarget = self.window.imageMatch(background, self.emptyClayMine, threshold=0.8)
+            target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
+            if emptyTarget != None:
+                waitForFull = True
+            elif waitForFull and target != None:
+                nextState = STATE_MINING
+                waiting = False
+            elif self.randomEventLocation != None:
+                nextState = STATE_RANDOM_EVENT_DISMISS
+                waiting = False
+
+            time.sleep(0.1)
+
+        return nextState
 
     #**************************************************************************
     # description
