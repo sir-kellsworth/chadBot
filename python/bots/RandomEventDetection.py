@@ -10,7 +10,7 @@ class RandomEventDetection:
         self.window = window
         self.callback = callback
         self.debug = True
-        self.textRange = ([0, 100, 100], [30, 255, 256])
+        self.textRange = ([0, 100, 100], [20, 236, 236])
         self.running = True
         self.backgroundThread = threading.Thread(target=self.run)
         self.backgroundThread.start()
@@ -26,6 +26,9 @@ class RandomEventDetection:
             kernel = np.ones((10, 10), np.uint8)
             closing = cv2.morphologyEx(textMask.copy(), cv2.MORPH_CLOSE, kernel)
             _, closing = cv2.threshold(closing, 0, 255, cv2.THRESH_BINARY)
+            kernel = np.ones((5, 5), np.uint8)
+            closing = cv2.dilate(closing, kernel, iterations=2)
+            closing = cv2.Canny(closing, 100, 200)
             contours, _ = cv2.findContours(closing, 1, 2)
             textAreas = []
             for next in contours:

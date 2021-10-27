@@ -1,5 +1,6 @@
 from bots.Bot import *
-import bots.RandomEventDetection
+import pytesseract as tess
+from PIL import Image
 
 STATE_MINING = 0
 STATE_EVENT_WAIT = 1
@@ -24,7 +25,7 @@ class Miner(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
-        self.red = bots.RandomEventDetection.RandomEventDetection(window, self.randomEventHandle)
+        #self.red = bots.RandomEventDetection.RandomEventDetection(window, self.randomEventHandle)
         self.randomEventLocation = None
         self.targetedMine = profile.targetGet()
         self.bankType = profile.bankTypeGet()
@@ -67,24 +68,26 @@ class Miner(Bot):
             'clay':         0.5
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
+        self.textRange = ([0, 150, 150], [30, 256, 256])#([0, 100, 100], [20, 236, 236])
         self.state = STATE_MINING
         self.clayMine = cv2.imread('templates/clayOre.png', 0)
         self.emptyClayMine = cv2.imread('templates/emptyClayOre.png', 0)
-
-    def randomEventHandle(self, location):
-        #eventually this will be a queue
-        #self.eventQueue.add((STATE_RANDOM_EVENT_DISMISS, location))
-        self.randomEventLocation = location
+        self.dismissText = cv2.imread('templates/dismissMessage.png', 0)
 
     def randomEventDismiss(self):
-        target = (self.randomEventLocation[0], self.randomEventLocation[1] + 50)
-        self.window.straightClick(self.randomPointSelect(target), 'right')
-        time.sleep(0.5)
-        playArea = self.window.playAreaGet()
+        target = (self.randomEventLocation[0] + 20, self.randomEventLocation[1] + 50)
+        self.window.straightClick(target, 'right')
+        time.sleep(1)
+        playArea = self.window.screenGet()
         dismissMessage = self.window.imageMatch(playArea, self.dismissText)
-        self.window.straightClick(dismissMessage, 'left')
-        time.sleep(0.5)
-        self.randomEventLocation = False
+        #if its not none, then its a random event
+        if dismissMessage != None:
+            self.window.straightClick(dismissMessage['center'], 'left')
+            time.sleep(0.5)
+        else:
+            self.window.mouse.onlyClick('left')
+
+        return STATE_MINING
 
     #**************************************************************************
     # description
@@ -146,22 +149,60 @@ class Miner(Bot):
         nextState = None
         waitForFull = False
 
+        endTime = time.time() + self.mineTimes[self.targetedMine]
         while waiting:
             background = self.window.playAreaGet()
             emptyTarget = self.window.imageMatch(background, self.emptyClayMine, threshold=0.8)
             target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
-            if emptyTarget != None:
+            randomEvent = self.randomEventDetect(background)
+            if randomEvent != None:
+                nextState = STATE_RANDOM_EVENT_DISMISS
+                self.randomEventLocation = randomEvent['center']
+                waiting = False
+            elif emptyTarget != None:
                 waitForFull = True
             elif waitForFull and target != None:
                 nextState = STATE_MINING
                 waiting = False
-            elif self.randomEventLocation != None:
-                nextState = STATE_RANDOM_EVENT_DISMISS
+            elif time.time() > endTime:
+                nextState = STATE_MINING
                 waiting = False
 
-            time.sleep(0.1)
+            time.sleep(0.2)
 
         return nextState
+
+    def randomEventDetect(self, background):
+        randomEvent = None
+        gray = cv2.inRange(background, np.array(self.textRange[0]), np.array(self.textRange[1]))
+        #gray = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
+        rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
+        gray = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, rectKernel)
+        _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        kernel = np.ones((10, 10), np.uint8)
+        final = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        cv2.imshow('gray', final)
+        cv2.waitKey(30)
+        contours, _ = cv2.findContours(final, 1, 2)
+        for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
+
+            print(w)
+            if w > 30:
+                if self.debug:
+                    cv2.imshow('texts', gray[y-5:y+h+5, x-5:x+w+5])
+                    cv2.waitKey(30)
+                textImage = Image.fromarray(gray[y-5:y+h+10, x-5:x+w+10])
+                interpretedText = tess.image_to_string(textImage).strip()
+                if interpretedText != "":
+                    print(interpretedText)
+                    if 'chadsButts' in interpretedText:
+                        print('found actual random event')
+
+                    randomEvent = {'center': (x + (w // 2), y + (h // 2)), 'size': (w, h)}
+                    return randomEvent
+
+        return randomEvent
 
     #**************************************************************************
     # description
