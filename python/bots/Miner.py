@@ -68,20 +68,34 @@ class Miner(Bot):
             'clay':         0.5
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
-        self.textRange = ([0, 150, 150], [30, 256, 256])#([0, 100, 100], [20, 236, 236])
+        self.textRange = ([0, 150, 150], [30, 256, 256])
         self.state = STATE_MINING
         self.clayMine = cv2.imread('templates/clayOre.png', 0)
         self.emptyClayMine = cv2.imread('templates/emptyClayOre.png', 0)
-        self.dismissText = cv2.imread('templates/dismissMessage.png', 0)
+        self.dismissText = cv2.imread('templates/dismissText.png', 0)
 
+    #**************************************************************************
+    # description
+    #   right clicks on what should be the random event, waits a second,
+    #   then clicks on the dismiss event button
     def randomEventDismiss(self):
         target = (self.randomEventLocation[0] + 20, self.randomEventLocation[1] + 50)
         self.window.straightClick(target, 'right')
-        time.sleep(1)
-        playArea = self.window.screenGet()
-        dismissMessage = self.window.imageMatch(playArea, self.dismissText)
+        waiting = True
+        endTime = time.time() + 5
+        time.sleep(0.4)
+        while waiting:
+            playArea = self.window.screenGet()
+            dismissMessage = self.window.imageMatch(playArea, self.dismissText, threshold=0.75)
+            if time.time() > endTime:
+                waiting = False
+            elif dismissMessage == None:
+                time.sleep(0.4)
+            else:
+                waiting = False
         #if its not none, then its a random event
         if dismissMessage != None:
+            self.targetDisplay(dismissMessage)
             self.window.straightClick(dismissMessage['center'], 'left')
             time.sleep(0.5)
         else:
@@ -144,6 +158,12 @@ class Miner(Bot):
 
         return returnState
 
+    #**************************************************************************
+    # description
+    #   waits for either a random event, mining to finish or a timeout in case
+    #   something weird happens
+    # returns:
+    #
     def eventWait(self):
         waiting = True
         nextState = None
@@ -175,32 +195,22 @@ class Miner(Bot):
     def randomEventDetect(self, background):
         randomEvent = None
         gray = cv2.inRange(background, np.array(self.textRange[0]), np.array(self.textRange[1]))
-        #gray = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
         rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
         gray = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, rectKernel)
         _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         kernel = np.ones((10, 10), np.uint8)
         final = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
-        cv2.imshow('gray', final)
-        cv2.waitKey(30)
         contours, _ = cv2.findContours(final, 1, 2)
         for next in contours:
             x, y, w, h = cv2.boundingRect(next)
 
-            print(w)
             if w > 30:
                 if self.debug:
-                    cv2.imshow('texts', gray[y-5:y+h+5, x-5:x+w+5])
+                    cv2.imshow('texts', background)
                     cv2.waitKey(30)
-                textImage = Image.fromarray(gray[y-5:y+h+10, x-5:x+w+10])
-                interpretedText = tess.image_to_string(textImage).strip()
-                if interpretedText != "":
-                    print(interpretedText)
-                    if 'chadsButts' in interpretedText:
-                        print('found actual random event')
 
-                    randomEvent = {'center': (x + (w // 2), y + (h // 2)), 'size': (w, h)}
-                    return randomEvent
+                randomEvent = {'center': (x + (w // 2), y + (h // 2)), 'size': (w, h)}
+                return randomEvent
 
         return randomEvent
 
@@ -222,7 +232,7 @@ class Miner(Bot):
             print("**********")
             self.stairsClimb('up', 2)
             self.window.click(bankMapLocationScaled, 'left')
-            time.sleep(10)
+            time.sleep(8)
 
         return STATE_BANK_DEPOSIT
 
@@ -316,7 +326,7 @@ class Miner(Bot):
             time.sleep(9)
             self.stairsClimb('down', 2)
         self.pathReplay('frombanktomine')
-        time.sleep(3)
+        time.sleep(2)
 
         return STATE_MINING
 
