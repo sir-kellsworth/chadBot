@@ -48,12 +48,6 @@ class Fighter(Bot):
 
     #**************************************************************************
     # description
-    #   destructor
-    def __del__(self):
-        self.running = False
-
-    #**************************************************************************
-    # description
     #   preforms the next step in the state machine
     def step(self):
         if self.state == STATE_FIGHT_START:

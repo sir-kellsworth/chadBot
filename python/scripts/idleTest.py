@@ -2,18 +2,21 @@
 
 import sys
 import os
+import signal
+import time
 sys.path.append(os.path.join(sys.path[0], os.getcwd() + '/python'))
-print(sys.path)
 
 from Mouse.IdleMouse import IdleMouse
 import Profile
 import RunescapeWindow
-import signal
-import time
+
+def signalHandler(sig, frame):
+    window.close()
 
 configFile = os.getcwd() + "/config/fighter.config"
 profile = Profile.Profile(configFile)
 window = RunescapeWindow.RunescapeWindow()
+signal.signal(signal.SIGINT, signalHandler)
 
 idleMouse = IdleMouse(window)
 idleMouse.idleStart()

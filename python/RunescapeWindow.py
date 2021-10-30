@@ -32,6 +32,12 @@ class RunescapeWindow:
 
         self.backgroundCapture = BackgroundCapture.BackgroundCapture(window)
 
+    ###########################################################################
+    # description
+    #   destructor
+    def close(self):
+        self.backgroundCapture.close()
+
     #**************************************************************************
     # description
     #   selects a world (326)

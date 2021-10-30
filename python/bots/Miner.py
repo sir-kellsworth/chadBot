@@ -192,6 +192,9 @@ class Miner(Bot):
 
         return nextState
 
+    ###########################################################################
+    # description
+    #   detects a random event npc in the background
     def randomEventDetect(self, background):
         randomEvent = None
         gray = cv2.inRange(background, np.array(self.textRange[0]), np.array(self.textRange[1]))

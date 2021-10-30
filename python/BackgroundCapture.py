@@ -15,10 +15,16 @@ class BackgroundCapture:
         self.currentImage = None
         time.sleep(1)
 
-    def __del__(self):
+    ###########################################################################
+    # description
+    #   destructor
+    def close(self):
         self.running = False
         self.backgroundThread.join()
 
+    ###########################################################################
+    # description
+    #   background thread to capture the runescape window
     def run(self):
         while self.running:
             corner = self.cornerGet()
@@ -27,6 +33,9 @@ class BackgroundCapture:
             self.currentImage = np.array(ImageGrab.grab(bbox=(corner[0], corner[1], corner[0]+size[0], corner[1]+size[1])))
             time.sleep(0.3)
 
+    ###########################################################################
+    # description
+    #   returns the entire runescape window
     def screenGet(self):
         return self.currentImage
 
