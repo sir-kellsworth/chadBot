@@ -10,8 +10,9 @@ from bots.Fighter import Fighter
 import Profile
 import RunescapeWindow
 
+running = True
 def signalHandler(sig, frame):
-    window.close()
+    running = False
 
 STATE_MINING = 0
 STATE_BANK_RUN = 1
@@ -25,7 +26,7 @@ signal.signal(signal.SIGINT, signalHandler)
 
 bot = Fighter(profile, window, debug=False)
 
-while True:
+while running:
     bot.step()
 
 window.close()

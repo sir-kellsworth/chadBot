@@ -10,8 +10,9 @@ from bots.Miner import Miner
 import Profile
 import RunescapeWindow
 
+running = True
 def signalHandler(sig, frame):
-    window.close()
+    running = False
 
 configFile = os.getcwd() + "/config/clayMiner.config"
 profile = Profile.Profile(configFile)
@@ -20,7 +21,7 @@ signal.signal(signal.SIGINT, signalHandler)
 
 bot = Miner(profile, window, debug=True)
 
-while True:
+while running:
     bot.step()
 
 window.close()
