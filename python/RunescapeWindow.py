@@ -1,3 +1,4 @@
+import BackgroundCapture
 import Xlib
 import Xlib.display
 import Xlib.X
@@ -19,17 +20,23 @@ class RunescapeWindow:
         self.mouse = HumanMouse()
         self.keyboard = Keyboard()
         self.display = Xlib.display.Display()
-        self.window = self.windowSearch()
+        window = self.windowSearch()
 
-        if self.window == None:
+        if window == None:
             self.runescapeStart()
-            self.window = self.windowSearch()
+            window = self.windowSearch()
 
         time.sleep(3)
-        self.windowCorner = (self.window.get_geometry().x, self.window.get_geometry().y)
-        self.windowSize = (self.window.get_geometry().width, self.window.get_geometry().height)
 
         self.templates = self.templatesLoad()
+
+        self.backgroundCapture = BackgroundCapture.BackgroundCapture(window)
+
+    ###########################################################################
+    # description
+    #   destructor
+    def close(self):
+        self.backgroundCapture.close()
 
     #**************************************************************************
     # description
@@ -88,7 +95,7 @@ class RunescapeWindow:
                 time.sleep(1)
         playButton = (existingUserButton['center'][0], existingUserButton['center'][1] + 20)
         self.absoluteClick(playButton, 'left')
-        time.sleep(1)
+        time.sleep(5)
 
         #also need to open the inventory
         inventory = self.imageMatch(self.screenGet(), self.templates['inventory'])
@@ -163,31 +170,27 @@ class RunescapeWindow:
     #   returns a pair x,y coordinate of the window corner
     #   this assumes that the window will not be moved
     def cornerGet(self):
-        return self.windowCorner
+        return self.backgroundCapture.cornerGet()
 
     #**************************************************************************
     # description
     #   returns the size of the runescape window
     #   this assumes that the window will not be moved
     def sizeGet(self):
-        return self.windowSize
+        return self.backgroundCapture.sizeGet()
 
     #**************************************************************************
     # description
     #   returns the entire runescape window
     def screenGet(self):
-        corner = self.cornerGet()
-        size = self.sizeGet()
-        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = self.backgroundCapture.screenGet()
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #**************************************************************************
     # description
     #   returns only the play area. No inventory or chat screen
     def playAreaGet(self):
-        corner = self.cornerGet()
-        size = self.sizeGet()
-        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = self.backgroundCapture.screenGet()
         img = img[25:500, 25:615]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -195,9 +198,7 @@ class RunescapeWindow:
     # description
     #   returns only the inventory. No play area or chat screen
     def inventoryAreaGet(self):
-        corner = self.cornerGet()
-        size = self.sizeGet()
-        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = self.backgroundCapture.screenGet()
         img = img[330:-85, 631:-9]
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -205,9 +206,7 @@ class RunescapeWindow:
     # description
     #   returns only the tabs in the bottom corner. No play area, chat screen or inventory
     def tabsAreaGet(self):
-        corner = self.cornerGet()
-        size = self.sizeGet()
-        img = np.array(ImageGrab.grab())[corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0]]
+        img = self.backgroundCapture.screenGet()
         return img[596:-5, 585:-2]
 
     #**************************************************************************

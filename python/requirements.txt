@@ -3,3 +3,4 @@ pyautogui
 selenium
 numpy
 opencv-python
+pytesseract

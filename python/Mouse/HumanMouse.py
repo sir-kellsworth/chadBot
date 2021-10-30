@@ -21,6 +21,9 @@ class HumanMouse:
         for point in curve.points:
             pyautogui.moveTo(point)
 
+    def onlyClick(self, button):
+        pyautogui.click(button=button)
+
     #**************************************************************************
     def click(self, toPos, button):
         fromPos = pyautogui.position()

@@ -1,9 +1,13 @@
 from bots.Bot import *
+import pytesseract as tess
+from PIL import Image
 
 STATE_MINING = 0
-STATE_BANK_RUN = 1
-STATE_BANK_DEPOSIT = 2
-STATE_MINE_RUN = 3
+STATE_EVENT_WAIT = 1
+STATE_RANDOM_EVENT_DISMISS = 2
+STATE_BANK_RUN = 3
+STATE_BANK_DEPOSIT = 4
+STATE_MINE_RUN = 5
 
 class Miner(Bot):
     #**************************************************************************
@@ -21,6 +25,8 @@ class Miner(Bot):
     #       description - used to enable debug windows of what the bot sees
     def __init__(self, profile, window, debug = False):
         self.debug = debug
+        #self.red = bots.RandomEventDetection.RandomEventDetection(window, self.randomEventHandle)
+        self.randomEventLocation = None
         self.targetedMine = profile.targetGet()
         self.bankType = profile.bankTypeGet()
         self.numStairs = profile.numStairsGet()
@@ -62,8 +68,40 @@ class Miner(Bot):
             'clay':         0.5
         }
         self.inventoryRange = ([39, 52, 60], [43, 55, 64])
+        self.textRange = ([0, 150, 150], [30, 256, 256])
         self.state = STATE_MINING
         self.clayMine = cv2.imread('templates/clayOre.png', 0)
+        self.emptyClayMine = cv2.imread('templates/emptyClayOre.png', 0)
+        self.dismissText = cv2.imread('templates/dismissText.png', 0)
+
+    #**************************************************************************
+    # description
+    #   right clicks on what should be the random event, waits a second,
+    #   then clicks on the dismiss event button
+    def randomEventDismiss(self):
+        target = (self.randomEventLocation[0] + 20, self.randomEventLocation[1] + 50)
+        self.window.straightClick(target, 'right')
+        waiting = True
+        endTime = time.time() + 5
+        time.sleep(0.4)
+        while waiting:
+            playArea = self.window.screenGet()
+            dismissMessage = self.window.imageMatch(playArea, self.dismissText, threshold=0.75)
+            if time.time() > endTime:
+                waiting = False
+            elif dismissMessage == None:
+                time.sleep(0.4)
+            else:
+                waiting = False
+        #if its not none, then its a random event
+        if dismissMessage != None:
+            self.targetDisplay(dismissMessage)
+            self.window.straightClick(dismissMessage['center'], 'left')
+            time.sleep(0.5)
+        else:
+            self.window.mouse.onlyClick('left')
+
+        return STATE_MINING
 
     #**************************************************************************
     # description
@@ -71,6 +109,10 @@ class Miner(Bot):
     def step(self):
         if self.state == STATE_MINING:
             self.state = self.mine()
+        elif self.state == STATE_EVENT_WAIT:
+            self.state = self.eventWait()
+        elif self.state == STATE_RANDOM_EVENT_DISMISS:
+            self.state = self.randomEventDismiss()
         elif self.state == STATE_BANK_RUN:
             self.state = self.bankRun()
         elif self.state == STATE_BANK_DEPOSIT:
@@ -102,7 +144,6 @@ class Miner(Bot):
         returnState = None
 
         if self.numItemsGet() < 28:
-            #target = self.search(self.targetedMine, areaThreshold=self.mineAreas[self.targetedMine])
             target = None
             while target == None:
                 background = self.window.playAreaGet()
@@ -110,13 +151,71 @@ class Miner(Bot):
                 time.sleep(0.1)
             self.targetDisplay(target)
             self.window.straightClick(self.randomPointSelect(target), 'left')
-            self.mineWait(self.responTimes[self.targetedMine])
 
-            returnState = STATE_MINING
+            returnState = STATE_EVENT_WAIT
         else:
             returnState = STATE_BANK_RUN
 
         return returnState
+
+    #**************************************************************************
+    # description
+    #   waits for either a random event, mining to finish or a timeout in case
+    #   something weird happens
+    # returns:
+    #
+    def eventWait(self):
+        waiting = True
+        nextState = None
+        waitForFull = False
+
+        endTime = time.time() + self.mineTimes[self.targetedMine]
+        while waiting:
+            background = self.window.playAreaGet()
+            emptyTarget = self.window.imageMatch(background, self.emptyClayMine, threshold=0.8)
+            target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
+            randomEvent = self.randomEventDetect(background)
+            if randomEvent != None:
+                nextState = STATE_RANDOM_EVENT_DISMISS
+                self.randomEventLocation = randomEvent['center']
+                waiting = False
+            elif emptyTarget != None:
+                waitForFull = True
+            elif waitForFull and target != None:
+                nextState = STATE_MINING
+                waiting = False
+            elif time.time() > endTime:
+                nextState = STATE_MINING
+                waiting = False
+
+            time.sleep(0.2)
+
+        return nextState
+
+    ###########################################################################
+    # description
+    #   detects a random event npc in the background
+    def randomEventDetect(self, background):
+        randomEvent = None
+        gray = cv2.inRange(background, np.array(self.textRange[0]), np.array(self.textRange[1]))
+        rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
+        gray = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, rectKernel)
+        _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        kernel = np.ones((10, 10), np.uint8)
+        final = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+        contours, _ = cv2.findContours(final, 1, 2)
+        for next in contours:
+            x, y, w, h = cv2.boundingRect(next)
+
+            if w > 30:
+                if self.debug:
+                    cv2.imshow('texts', background)
+                    cv2.waitKey(30)
+
+                randomEvent = {'center': (x + (w // 2), y + (h // 2)), 'size': (w, h)}
+                return randomEvent
+
+        return randomEvent
 
     #**************************************************************************
     # description
@@ -136,7 +235,7 @@ class Miner(Bot):
             print("**********")
             self.stairsClimb('up', 2)
             self.window.click(bankMapLocationScaled, 'left')
-            time.sleep(10)
+            time.sleep(8)
 
         return STATE_BANK_DEPOSIT
 
@@ -230,7 +329,7 @@ class Miner(Bot):
             time.sleep(9)
             self.stairsClimb('down', 2)
         self.pathReplay('frombanktomine')
-        time.sleep(3)
+        time.sleep(2)
 
         return STATE_MINING
 
