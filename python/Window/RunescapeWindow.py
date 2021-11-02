@@ -102,9 +102,8 @@ class RunescapeWindow:
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
-        screen = None
-        localScreenUpdate = lambda windowSet : screen = windowSet['window']
-        self.backgroundCapture.screenGetSubscribe(localScreenUpdate)
+        self.screen = None
+        self.backgroundCapture.screenGetSubscribe(self.screenUpdate)
         #wait for it to update
         time.sleep(1)
         existingUserButton = self.imageMatch(screen, self.templates['existingUserButton'])
@@ -122,7 +121,7 @@ class RunescapeWindow:
         #need to wait for click to play button to appear.
         waiting = True
         while waiting:
-            playButton = self.imageMatch(screen, self.templates['clickToPlayButton'])
+            playButton = self.imageMatch(self.screen, self.templates['clickToPlayButton'])
             if playButton != None:
                 waiting = False
             else:
@@ -132,14 +131,14 @@ class RunescapeWindow:
         time.sleep(5)
 
         #also need to open the inventory
-        inventory = self.imageMatch(screen, self.templates['inventory'])
+        inventory = self.imageMatch(self.screen, self.templates['inventory'])
         self.absoluteClick(inventory['center'], 'left')
         time.sleep(1)
 
         #force screen to be topdown view
         self.topViewSet()
         #unregister as its not needed anymore
-        self.backgroundCapture.screenGetUnSubscribe(localScreenUpdate)
+        self.backgroundCapture.screenGetUnSubscribe(self.screenUpdate)
 
     #**************************************************************************
     # description
