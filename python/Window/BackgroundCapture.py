@@ -54,6 +54,13 @@ class BackgroundCapture:
 
     ###########################################################################
     # description
+    #   removes the subscriber
+    def screenGetUnsubscribe(self, subscriber):
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)
+
+    ###########################################################################
+    # description
     #   subscribes the object if its not already subscribed
     def screenGetSubscribe(self, subscriber):
         if not subscriber in self.subscribers:

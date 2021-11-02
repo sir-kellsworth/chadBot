@@ -8,9 +8,11 @@ import numpy as np
 import cv2
 from PIL import ImageGrab
 import random
+import threading
 
-from Mouse.HumanMouse import HumanMouse
 from Keyboard import Keyboard
+from Mouse.HumanMouse import HumanMouse
+import WorldSelect
 
 class RunescapeWindow:
     #**************************************************************************
@@ -56,9 +58,16 @@ class RunescapeWindow:
 
     #**************************************************************************
     # description
-    #   selects a world (326)
+    #   selects a world (326). This function kinda breaks the event driven effect
+    #   for convenience. It registers a function to wait for window updates, then
+    #   saves the update to a variable so it can peak at the window and pick the
+    #   world
     def worldPick(self):
-        screen = self.screenGet()
+        screen = None
+        localScreenUpdate = lambda windowSet : screen = windowSet['window']
+        self.backgroundCapture.screenGetSubscribe(localScreenUpdate)
+        #wait for it to update
+        time.sleep(1)
         gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
         #reduces the color range to highlight button areas
         _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
@@ -74,20 +83,26 @@ class RunescapeWindow:
         time.sleep(1)
 
         #next find only the free (white) worlds
-        screen = self.screenGet()
         freeMask = cv2.inRange(screen, np.array((150, 150, 150)), np.array((220, 220, 220)))
         freeWorlds = cv2.bitwise_not(freeMask)
         freeWorldButtons = self.buttonsFind(freeWorlds, 50, 60)
 
-        choice = freeWorldButtons[0]#random.choice(freeWorldButtons)
+        choice = freeWorldButtons[0]
         self.absoluteClick(choice['center'], 'left')
         time.sleep(1)
+
+        #unregister as its not needed anymore
+        self.backgroundCapture.screenGetUnSubscribe(localScreenUpdate)
 
     #**************************************************************************
     # description
     #   presses the login buttons and types in the username and password
     def login(self, username, password):
-        screen = self.screenGet()
+        screen = None
+        localScreenUpdate = lambda windowSet : screen = windowSet['window']
+        self.backgroundCapture.screenGetSubscribe(localScreenUpdate)
+        #wait for it to update
+        time.sleep(1)
         existingUserButton = self.imageMatch(screen, self.templates['existingUserButton'])
 
         self.absoluteClick(existingUserButton['center'], 'left')
@@ -103,7 +118,6 @@ class RunescapeWindow:
         #need to wait for click to play button to appear.
         waiting = True
         while waiting:
-            screen = self.screenGet()
             playButton = self.imageMatch(screen, self.templates['clickToPlayButton'])
             if playButton != None:
                 waiting = False
@@ -114,12 +128,14 @@ class RunescapeWindow:
         time.sleep(5)
 
         #also need to open the inventory
-        inventory = self.imageMatch(self.screenGet(), self.templates['inventory'])
+        inventory = self.imageMatch(screen, self.templates['inventory'])
         self.absoluteClick(inventory['center'], 'left')
         time.sleep(1)
 
         #force screen to be topdown view
         self.topViewSet()
+        #unregister as its not needed anymore
+        self.backgroundCapture.screenGetUnSubscribe(localScreenUpdate)
 
     #**************************************************************************
     # description
