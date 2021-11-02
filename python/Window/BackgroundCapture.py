@@ -5,6 +5,9 @@ from PIL import ImageGrab
 import time
 
 class BackgroundCapture:
+    ###########################################################################
+    # description
+    #   constructor
     def __init__(self, window):
         self.running = True
         self.window = window

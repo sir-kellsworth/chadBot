@@ -12,7 +12,6 @@ import threading
 
 from Keyboard import Keyboard
 from Mouse.HumanMouse import HumanMouse
-import WorldSelect
 
 class RunescapeWindow:
     #**************************************************************************
@@ -42,6 +41,9 @@ class RunescapeWindow:
     def close(self):
         self.controlQueue.put(EventKill())
 
+    ###########################################################################
+    # description
+    #   control thread
     def controlHandle(self):
         while self.running:
             nextState = self.controlQueue.get()
@@ -56,6 +58,9 @@ class RunescapeWindow:
                 self.backgroundCapture.close()
                 self.running = False
 
+    def screenUpdate(self, windowSet):
+        self.screen = windowSet['window']
+
     #**************************************************************************
     # description
     #   selects a world (326). This function kinda breaks the event driven effect
@@ -63,12 +68,11 @@ class RunescapeWindow:
     #   saves the update to a variable so it can peak at the window and pick the
     #   world
     def worldPick(self):
-        screen = None
-        localScreenUpdate = lambda windowSet : screen = windowSet['window']
-        self.backgroundCapture.screenGetSubscribe(localScreenUpdate)
+        self.screen = None
+        self.backgroundCapture.screenGetSubscribe(self.screenUpdate)
         #wait for it to update
         time.sleep(1)
-        gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(self.screen, cv2.COLOR_BGR2GRAY)
         #reduces the color range to highlight button areas
         _, thrash = cv2.threshold(gray, 50, 150, cv2.THRESH_BINARY_INV)
         buttons = self.buttonsFind(thrash, 3000, 5000)
@@ -83,7 +87,7 @@ class RunescapeWindow:
         time.sleep(1)
 
         #next find only the free (white) worlds
-        freeMask = cv2.inRange(screen, np.array((150, 150, 150)), np.array((220, 220, 220)))
+        freeMask = cv2.inRange(self.screen, np.array((150, 150, 150)), np.array((220, 220, 220)))
         freeWorlds = cv2.bitwise_not(freeMask)
         freeWorldButtons = self.buttonsFind(freeWorlds, 50, 60)
 
@@ -92,7 +96,7 @@ class RunescapeWindow:
         time.sleep(1)
 
         #unregister as its not needed anymore
-        self.backgroundCapture.screenGetUnSubscribe(localScreenUpdate)
+        self.backgroundCapture.screenGetUnSubscribe(self.screenUpdate)
 
     #**************************************************************************
     # description
