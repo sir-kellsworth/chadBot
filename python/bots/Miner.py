@@ -148,9 +148,8 @@ class Miner(Bot):
             while target == None:
                 background = self.window.playAreaGet()
                 target = self.window.imageMatch(background, self.clayMine, threshold=0.8)
-                time.sleep(0.1)
             self.targetDisplay(target)
-            self.window.straightClick(self.randomPointSelect(target), 'left')
+            self.window.straightClick(self.randomPointSelect(target), 'left', duration=0.05)
 
             returnState = STATE_EVENT_WAIT
         else:
@@ -188,7 +187,7 @@ class Miner(Bot):
                 nextState = STATE_MINING
                 waiting = False
 
-            time.sleep(0.2)
+            time.sleep(0.1)
 
         return nextState
 
@@ -226,7 +225,7 @@ class Miner(Bot):
     def bankRun(self):
         size = self.window.sizeGet()
         self.pathReplay('fromminetobank')
-        time.sleep(3)
+        time.sleep(2)
         if self.numStairs != 0:
             bankMapLocation = (748, 74)
             bankMapLocationScaled = (bankMapLocation[0] / size[0], bankMapLocation[1] / size[1])
@@ -329,31 +328,6 @@ class Miner(Bot):
             time.sleep(9)
             self.stairsClimb('down', 2)
         self.pathReplay('frombanktomine')
-        time.sleep(2)
+        time.sleep(1)
 
         return STATE_MINING
-
-    #**************************************************************************
-    # description
-    #   waits for the mine to respond, then checks to make sure its there again.
-    #   if the mining process takes longer than 15 seconds, then it just returns
-    # parameters
-    #   respondTime
-    #       type        - int
-    #       description - how long to wait before returning
-    def mineWait(self, respondTime):
-        mining = True
-        currentNum = self.numItemsGet()
-
-        endTime = time.time() + self.mineTimes[self.targetedMine]
-        while mining:
-            if self.numItemsGet() > currentNum:
-                mining = False
-                time.sleep(respondTime)
-                return
-            #make sure it doesnt break if someone mines it before we do
-            if time.time() > endTime:
-                mining = False
-                return
-
-            time.sleep(0.3)

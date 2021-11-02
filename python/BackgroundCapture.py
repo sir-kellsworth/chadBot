@@ -31,7 +31,7 @@ class BackgroundCapture:
             size = self.sizeGet()
             #box = (corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0])
             self.currentImage = np.array(ImageGrab.grab(bbox=(corner[0], corner[1], corner[0]+size[0], corner[1]+size[1])))
-            time.sleep(0.3)
+            time.sleep(0.4)
 
     ###########################################################################
     # description

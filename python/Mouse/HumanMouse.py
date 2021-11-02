@@ -31,7 +31,7 @@ class HumanMouse:
         for point in curve.points:
             pyautogui.moveTo(point)
 
-        pyautogui.click(button=button)#, duration=self.duration)
+        pyautogui.click(button=button)
 
     #**************************************************************************
     def straightClick(self, toPos, button, duration):

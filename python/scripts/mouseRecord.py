@@ -23,3 +23,4 @@ capture.captureStop()
 
 print("saving")
 capture.save(filename)
+window.close()
