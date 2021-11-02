@@ -31,12 +31,28 @@ class RunescapeWindow:
         self.templates = self.templatesLoad()
 
         self.backgroundCapture = BackgroundCapture.BackgroundCapture(window)
+        self.controlThread = threading.Thread(target=self.controlHandle)
+        self.controlThread.start()
 
     ###########################################################################
     # description
     #   destructor
     def close(self):
-        self.backgroundCapture.close()
+        self.controlQueue.put(EventKill())
+
+    def controlHandle(self):
+        while self.running:
+            nextState = self.controlQueue.get()
+
+            if nextState.type == TYPE_CAPTURE_START:
+                self.backgroundCapture.start()
+            elif nextState.type == TYPE_CAPTURE_STOP:
+                self.backgroundCapture.stop()
+            elif nextState.type == TYPE_TIMER_ADJUST:
+                self.backgroundCapture.timerAdjust(nextState.timerValueGet())
+            elif nextState.type == TYPE_KILL:
+                self.backgroundCapture.close()
+                self.running = False
 
     #**************************************************************************
     # description
@@ -182,25 +198,8 @@ class RunescapeWindow:
     #**************************************************************************
     # description
     #   returns the entire runescape window
-    def screenGet(self):
-        img = self.backgroundCapture.screenGet()
-        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    #**************************************************************************
-    # description
-    #   returns only the play area. No inventory or chat screen
-    def playAreaGet(self):
-        img = self.backgroundCapture.screenGet()
-        img = img[25:500, 25:615]
-        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    #**************************************************************************
-    # description
-    #   returns only the inventory. No play area or chat screen
-    def inventoryAreaGet(self):
-        img = self.backgroundCapture.screenGet()
-        img = img[330:-85, 631:-9]
-        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    def screenGetSubscribe(self, subscriber):
+        self.backgroundCapture.screenGetSubscribe(subscriber)
 
     #**************************************************************************
     # description

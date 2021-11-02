@@ -12,7 +12,8 @@ class BackgroundCapture:
         self.size = (self.window.get_geometry().width, self.window.get_geometry().height)
         self.backgroundThread = threading.Thread(target=self.run)
         self.backgroundThread.start()
-        self.currentImage = None
+        self.subscribers = []
+        self.timerDelay = 0.4
         time.sleep(1)
 
     ###########################################################################
@@ -22,6 +23,13 @@ class BackgroundCapture:
         self.running = False
         self.backgroundThread.join()
 
+    #**************************************************************************
+    # description
+    #   returns a pair x,y coordinate of the window corner
+    #   this assumes that the window will not be moved
+    def cornerGet(self):
+        return self.corner
+
     ###########################################################################
     # description
     #   background thread to capture the runescape window
@@ -30,21 +38,26 @@ class BackgroundCapture:
             corner = self.cornerGet()
             size = self.sizeGet()
             #box = (corner[1]:corner[1]+size[1], corner[0]:corner[0]+size[0])
-            self.currentImage = np.array(ImageGrab.grab(bbox=(corner[0], corner[1], corner[0]+size[0], corner[1]+size[1])))
-            time.sleep(0.4)
+            window = np.array(ImageGrab.grab(bbox=(corner[0], corner[1], corner[0]+size[0], corner[1]+size[1])))
+            window =  cv2.cvtColor(window, cv2.COLOR_BGR2RGB)
+            playArea = window[25:500, 25:615]
+            inventory = window[330:-85, 631:-9]
+
+            for subscriber in self.subscribers:
+                subscriber.windowProcess({
+                    'window': window,
+                    'playArea': playArea,
+                    'inventory': inventory
+                })
+
+            time.sleep(self.timerDelay)
 
     ###########################################################################
     # description
-    #   returns the entire runescape window
-    def screenGet(self):
-        return self.currentImage
-
-    #**************************************************************************
-    # description
-    #   returns a pair x,y coordinate of the window corner
-    #   this assumes that the window will not be moved
-    def cornerGet(self):
-        return self.corner
+    #   subscribes the object if its not already subscribed
+    def screenGetSubscribe(self, subscriber):
+        if not subscriber in self.subscribers:
+            self.subscribers.append(subscriber)
 
     #**************************************************************************
     # description
