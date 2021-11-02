@@ -1,4 +1,7 @@
-import BackgroundCapture
+import Window.BackgroundCapture
+from Keyboard import Keyboard
+from Mouse.HumanMouse import HumanMouse
+
 import Xlib
 import Xlib.display
 import Xlib.X
@@ -9,9 +12,7 @@ import cv2
 from PIL import ImageGrab
 import random
 import threading
-
-from Keyboard import Keyboard
-from Mouse.HumanMouse import HumanMouse
+import queue
 
 class RunescapeWindow:
     #**************************************************************************
@@ -31,7 +32,9 @@ class RunescapeWindow:
 
         self.templates = self.templatesLoad()
 
-        self.backgroundCapture = BackgroundCapture.BackgroundCapture(window)
+        self.running = True
+        self.controlQueue = queue.Queue()
+        self.backgroundCapture = Window.BackgroundCapture.BackgroundCapture(window)
         self.controlThread = threading.Thread(target=self.controlHandle)
         self.controlThread.start()
 
@@ -96,7 +99,7 @@ class RunescapeWindow:
         time.sleep(1)
 
         #unregister as its not needed anymore
-        self.backgroundCapture.screenGetUnSubscribe(self.screenUpdate)
+        self.backgroundCapture.screenGetUnsubscribe(self.screenUpdate)
 
     #**************************************************************************
     # description
@@ -106,7 +109,7 @@ class RunescapeWindow:
         self.backgroundCapture.screenGetSubscribe(self.screenUpdate)
         #wait for it to update
         time.sleep(1)
-        existingUserButton = self.imageMatch(screen, self.templates['existingUserButton'])
+        existingUserButton = self.imageMatch(self.screen, self.templates['existingUserButton'])
 
         self.absoluteClick(existingUserButton['center'], 'left')
         time.sleep(1)
@@ -138,7 +141,7 @@ class RunescapeWindow:
         #force screen to be topdown view
         self.topViewSet()
         #unregister as its not needed anymore
-        self.backgroundCapture.screenGetUnSubscribe(self.screenUpdate)
+        self.backgroundCapture.screenGetUnsubscribe(self.screenUpdate)
 
     #**************************************************************************
     # description

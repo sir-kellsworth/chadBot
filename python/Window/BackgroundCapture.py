@@ -47,7 +47,7 @@ class BackgroundCapture:
             inventory = window[330:-85, 631:-9]
 
             for subscriber in self.subscribers:
-                subscriber.windowProcess({
+                subscriber({
                     'window': window,
                     'playArea': playArea,
                     'inventory': inventory

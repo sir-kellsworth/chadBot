@@ -11,7 +11,7 @@ def signalHandler(sig, frame):
     window.close()
 
 profile = Profile.Profile("config/miner.py")
-window = RunescapeWindow.RunescapeWindow()
+window = Window.RunescapeWindow.RunescapeWindow()
 signal.signal(signal.SIGINT, signalHandler)
 
 window.worldPick()
