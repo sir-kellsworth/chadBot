@@ -16,8 +16,11 @@ def signalHandler(sig, frame):
     print('caught signal')
     running = False
 
+print('started mineTest')
 configFile = os.getcwd() + "/config/clayMiner.config"
-profile = Profile.Profile(configFile)
+passwordFile = sys.argv[1]
+profile = Profile.Profile(configFile, passwordFile)
+
 window = RunescapeWindow.RunescapeWindow()
 signal.signal(signal.SIGINT, signalHandler)
 
@@ -26,5 +29,4 @@ bot = Miner(profile, window, debug=False)
 while running:
     bot.step()
 
-print("bot done")
 window.close()

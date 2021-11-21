@@ -75,7 +75,7 @@ class Bot:
         inventoryArea = cv2.bitwise_not(emptyMask)
         if self.debug:
             cv2.imshow('inventory', inventoryArea)
-            cv2.waitKey(1)
+            cv2.waitKey(10)
 
         contours, _ = cv2.findContours(inventoryArea.copy(), 1, 2)
         mineAreas = []
