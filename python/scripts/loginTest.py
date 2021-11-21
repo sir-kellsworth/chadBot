@@ -10,7 +10,12 @@ import RunescapeWindow
 def signalHandler(sig, frame):
     window.close()
 
-profile = Profile.Profile("config/miner.py")
+if len(sys.argv) < 2:
+    print("./loginTest.py passwordFile")
+    exit(1)
+
+passwordFile = sys.argv[1]
+profile = Profile.Profile("config/miner.config", passwordFile)
 window = RunescapeWindow.RunescapeWindow()
 signal.signal(signal.SIGINT, signalHandler)
 
