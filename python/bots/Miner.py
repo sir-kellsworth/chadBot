@@ -103,6 +103,11 @@ class Miner(Bot):
 
         return STATE_MINING
 
+    def controlHandle(self):
+        while self.running:
+            if self.state == STATE_MINING:
+                self.targets = [self.targetMine, self.randomEventText]
+
     #**************************************************************************
     # description
     #   preforms the next step in the state machine
@@ -298,11 +303,16 @@ class Miner(Bot):
         #click on bank window
         self.targetDisplay(target)
         self.window.absoluteClick(self.randomPointSelect(target), 'left')
-        time.sleep(5)
         #click on deposit all button
-        background = self.window.screenGet()
-        depositAll = self.window.imageMatch(background, self.window.templates['bankDepositAll'], threshold=0.6)
-        self.targetDisplay(depositAll)
+        depositSearching = True
+        while depositSearching:
+            background = self.window.screenGet()
+            depositAll = self.window.imageMatch(background, self.window.templates['bankDepositAll'], threshold=0.6)
+            self.targetDisplay(depositAll)
+            if depositAll != None:
+                depositSearching = False
+            else:
+                time.sleep(0.2)
         self.window.absoluteClick(depositAll['center'], 'left')
         time.sleep(1)
         closeBank = self.window.imageMatch(background, self.window.templates['bankExitButton'])
