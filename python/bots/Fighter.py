@@ -1,5 +1,4 @@
 from bots.Bot import *
-from bots.BackgroundSubtractor import BackgroundSubtractor
 from Mouse.IdleMouse import IdleMouse
 
 import cv2
@@ -46,6 +45,23 @@ class Fighter(Bot):
 
         self.idleMouse = IdleMouse(self.window)
 
+        self.templates = self.templatesLoad('templates/cows')
+
+    #**************************************************************************
+    def templatesLoad(self, templateFolder):
+        templates = {}
+        for root, folders, files in os.walk(templateFolder):
+            for file in files:
+                fileBase = os.path.splitext(file)[0]
+                baseImage = cv2.imread(os.path.join(root, file), 0)
+                templates[fileBase] = baseImage
+                templates[fileBase + "-rotated90"] = cv2.rotate(baseImage, cv2.ROTATE_90_CLOCKWISE)
+                templates[fileBase + "-flipped"] = cv2.flip(baseImage, -1)
+                templates[fileBase + "-rotated-90"] = cv2.rotate(baseImage, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+
+        return templates
+
     #**************************************************************************
     # description
     #   preforms the next step in the state machine
@@ -77,7 +93,7 @@ class Fighter(Bot):
             target = self.search()
             self.targetDisplay(target)
             center = target['center']
-            center = (center[0] + (target['size'][0] // 2), center[1] + (target['size'][1] // 2) + 5)
+            center = (center[0] + (target['size'][0] // 2) + 5, center[1] + (target['size'][1] // 2) + 5)
             self.window.straightClick(center, 'left', duration=0)
 
             returnState = STATE_TARGET_TRACK
@@ -103,7 +119,7 @@ class Fighter(Bot):
         while searching:
             playArea = self.window.playAreaGet()
             for targetName, targetTemplate in self.templates.items():
-                targetArea = self.window.imageMatch(playArea, targetTemplate, threshold=0.69)
+                targetArea = self.window.imageMatch(playArea, targetTemplate, threshold=0.67)
                 if targetArea != None:
                     searching = False
                     break

@@ -25,22 +25,6 @@ class Bot:
             self.paths[path['PathName']] = InputReplay(path['File'], window)
         self.idleMessages = profile.idleMessagesGet()
         self.idleChance = profile.idleChanceGet()
-        #self.templates = self.templatesLoad(profile.templatesFolderGet())
-
-    #**************************************************************************
-    def templatesLoad(self, templateFolder):
-        templates = {}
-        for root, folders, files in os.walk(templateFolder):
-            for file in files:
-                fileBase = os.path.splitext(file)[0]
-                baseImage = cv2.imread(os.path.join(root, file), 0)
-                templates[fileBase] = baseImage
-                templates[fileBase + "-rotated90"] = cv2.rotate(baseImage, cv2.ROTATE_90_CLOCKWISE)
-                templates[fileBase + "-flipped"] = cv2.flip(baseImage, -1)
-                templates[fileBase + "-rotated-90"] = cv2.rotate(baseImage, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-
-        return templates
 
     #**************************************************************************
     # description

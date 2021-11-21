@@ -9,11 +9,11 @@ class Profile:
     #   configFile
     #       type        - string
     #       description - file location to load config file from
-    def __init__(self, configFile):
+    def __init__(self, configFile, passwordFile):
         self.config = configparser.ConfigParser()
         self.config.read(configFile)
         self.login = configparser.ConfigParser()
-        self.login.read('config/login.config')
+        self.login.read(passwordFile)
 
     def templatesFolderGet(self):
         return self.config.get('Mining', 'templateFolder')
